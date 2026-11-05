@@ -1,0 +1,13 @@
+.git
+.venv
+.env
+data
+envs
+experiments
+outdated
+*.pdf
+__pycache__
+.pytest_cache
+.ruff_cache
+mlflow.db
+mlruns

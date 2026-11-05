@@ -1,6 +1,28 @@
 .env
-data/
+/data/*
+!/data/derived/
+/data/derived/*
+# feature tables: enough to run the models without the 10 GB of raw data
+!/data/derived/solar_dataset.parquet
+!/data/derived/onshore_dataset.parquet
+!/data/derived/offshore_dataset.parquet
+!/data/derived/co2_dataset.parquet
+!/data/derived/co2_sequences.npz
+!/data/derived/co2_far_sequences.npz
 __pycache__/
 .venv/
 CLAUDE.md
 *.pdf
+# previous iteration, kept as reference only
+outdated/
+# local environments of foundation-model experiments (3 GB)
+envs/
+# working draft; remove this line when the report is final
+final_report.md
+.pytest_cache/
+.ruff_cache/
+# local experiments with pretrained forecasters, not part of the deliverable
+experiments/
+# local MLflow store when no server answers
+mlflow.db
+mlruns/

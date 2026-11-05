@@ -1,0 +1,11 @@
+{
+  "net": "lstm",
+  "net_params": {"hidden": 64, "layers": 2, "dropout": 0.2},
+  "model": "rnn",
+  "model_params": {"lr": 0.001, "weight_decay": 0.01},
+  "epochs": 20,
+  "batch_size": 32,
+  "threads": 2,
+  "grad_clip": 1.0,
+  "one_cycle": true
+}

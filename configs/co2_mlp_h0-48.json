@@ -1,0 +1,11 @@
+{
+  "net": "mlp",
+  "net_params": {"hidden": [256, 128]},
+  "model": "regression",
+  "model_params": {"lr": 0.001, "weight_decay": 0.0001},
+  "epochs": 20,
+  "batch_size": 512,
+  "threads": 2,
+  "grad_clip": 1.0,
+  "one_cycle": true
+}
