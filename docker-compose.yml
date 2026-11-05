@@ -1,7 +1,7 @@
 # MLflow tracking server plus two training images built from uv.lock (Dockerfile).
 #   docker compose up -d                                   -> MLflow UI at http://localhost:5001
 #   docker compose run --rm train lgbm.run_hpo solar       -> LightGBM inside the container,
-#   docker compose run --rm train-neural neural.run ...    -> LSTM/MLP, torch CPU build;
+#   docker compose run --rm train-neural neural.train ...    -> LSTM/MLP, torch CPU build;
 #                                                             both log to the same MLflow
 
 x-train: &train

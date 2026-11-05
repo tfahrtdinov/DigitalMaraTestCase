@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 712" width="1100" height="712" role="img" aria-label="LightGBM and the neural network follow the same training scheme: config and data, a fit for each period on the past only, a forecast, one shared forecast table and scoring. Below: the training, search, validation and test periods of each model." font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+<defs><marker id="a1c2430" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#1c2430"/></marker><marker id="a2a78d6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2a78d6"/></marker><marker id="a7a4fd0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#7a4fd0"/></marker><marker id="a8792a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#8792a2"/></marker><marker id="ad9622b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#d9622b"/></marker></defs>
+<rect width="1100" height="712" rx="16" fill="#ffffff"/>
+<text x="24" y="26" font-size="12" fill="#5b6675" font-weight="700" text-anchor="start" letter-spacing="0.8">1  CONFIG AND DATA</text>
+<text x="232" y="26" font-size="12" fill="#5b6675" font-weight="700" text-anchor="start" letter-spacing="0.8">2  FIT</text>
+<text x="556" y="26" font-size="12" fill="#5b6675" font-weight="700" text-anchor="start" letter-spacing="0.8">3  FORECAST</text>
+<text x="835" y="26" font-size="12" fill="#5b6675" font-weight="700" text-anchor="start" letter-spacing="0.8">4  SCORE</text>
+<rect x="10" y="36" width="800" height="176" rx="14" fill="#eef5fd"/>
+<text x="28" y="62" font-size="12" fill="#2a78d6" font-weight="700" text-anchor="start" letter-spacing="0.8">LIGHTGBM · src/lgbm/</text>
+<rect x="24" y="74" width="176" height="50" rx="9" fill="#ffffff" stroke="#2a78d6" stroke-width="1.6"/>
+<text x="112.0" y="96.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">lgbm/run_hpo.py</text>
+<text x="112.0" y="116.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">tunes the parameters</text>
+<path d="M112 124 L112 140" fill="none" stroke="#2a78d6" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#a2a78d6)"/>
+<rect x="24" y="140" width="176" height="64" rx="9" fill="#ffffff" stroke="#2a78d6" stroke-width="1.6"/>
+<text x="112.0" y="169.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">configs/*_lgbm*.json</text>
+<text x="112.0" y="189.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">*_dataset.parquet</text>
+<path d="M200 172 L232 172" fill="none" stroke="#2a78d6" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#a2a78d6)"/>
+<rect x="216" y="70" width="584" height="134" rx="10" fill="none" stroke="#1c2430" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="230" y="90" font-size="13" fill="#1c2430" font-weight="650" text-anchor="start">lgbm/run_holdout.py · for each period</text>
+<rect x="232" y="98" width="270" height="98" rx="9" fill="#ffffff" stroke="#2a78d6" stroke-width="1.6"/>
+<text x="367.0" y="127.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Fit</text>
+<text x="367.0" y="147.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">lgbm/fit.py</text>
+<text x="367.0" y="164.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">LightGBM on everything before</text>
+<text x="367.0" y="181.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">the period, minus a 7-day gap</text>
+<path d="M502 147 L556 147" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" marker-end="url(#a2a78d6)"/>
+<rect x="556" y="98" width="230" height="98" rx="9" fill="#ffffff" stroke="#2a78d6" stroke-width="1.6"/>
+<text x="671.0" y="127.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Forecast</text>
+<text x="671.0" y="147.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">lgbm.predict</text>
+<text x="671.0" y="164.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">task.scoring_table</text>
+<text x="671.0" y="181.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">back to physical units</text>
+<rect x="232" y="220" width="270" height="48" rx="9" fill="#ffffff" stroke="#1c2430" stroke-width="1.6"/>
+<text x="367.0" y="241.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">validation.folds</text>
+<text x="367.0" y="261.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">the same way of cutting periods</text>
+<path d="M367 220 L367 204" fill="none" stroke="#1c2430" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#a1c2430)"/>
+<path d="M367 268 L367 310" fill="none" stroke="#1c2430" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#a1c2430)"/>
+<rect x="10" y="276" width="800" height="176" rx="14" fill="#fdf3ed"/>
+<text x="28" y="302" font-size="12" fill="#d9622b" font-weight="700" text-anchor="start" letter-spacing="0.8">NEURAL NETWORK · src/neural/</text>
+<rect x="24" y="332" width="176" height="64" rx="9" fill="#ffffff" stroke="#d9622b" stroke-width="1.6"/>
+<text x="112.0" y="361.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">configs/co2_lstm*.json</text>
+<text x="112.0" y="381.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">co2_*sequences.npz</text>
+<path d="M200 364 L232 364" fill="none" stroke="#d9622b" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#ad9622b)"/>
+<rect x="216" y="310" width="298" height="134" rx="10" fill="none" stroke="#1c2430" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="230" y="330" font-size="13" fill="#1c2430" font-weight="650" text-anchor="start">neural/train.py · period × seed</text>
+<rect x="232" y="338" width="270" height="98" rx="9" fill="#ffffff" stroke="#d9622b" stroke-width="1.6"/>
+<text x="367.0" y="367.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Fit</text>
+<text x="367.0" y="387.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">neural/fit.py, neural/trainer.py</text>
+<text x="367.0" y="404.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">a network per seed on the same past,</text>
+<text x="367.0" y="421.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">saved to fitted/*.pt</text>
+<rect x="540" y="310" width="260" height="134" rx="10" fill="none" stroke="#1c2430" stroke-width="1.2" stroke-dasharray="5 4"/>
+<text x="554" y="330" font-size="13" fill="#1c2430" font-weight="650" text-anchor="start">neural/run_holdout.py</text>
+<rect x="556" y="338" width="230" height="98" rx="9" fill="#ffffff" stroke="#d9622b" stroke-width="1.6"/>
+<text x="671.0" y="367.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Forecast</text>
+<text x="671.0" y="387.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">neural.predict</text>
+<text x="671.0" y="404.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">loads fitted/*.pt,</text>
+<text x="671.0" y="421.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">mean over the seeds</text>
+<path d="M502 387 L556 387" fill="none" stroke="#d9622b" stroke-width="2" stroke-linejoin="round" marker-end="url(#ad9622b)"/>
+<path d="M786 147 L815 147 L815 208 L835 208" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" marker-end="url(#a2a78d6)"/>
+<path d="M786 387 L815 387 L815 252 L835 252" fill="none" stroke="#d9622b" stroke-width="2" stroke-linejoin="round" marker-end="url(#ad9622b)"/>
+<rect x="835" y="170" width="250" height="120" rx="9" fill="#1c2430" stroke="#1c2430" stroke-width="1.6"/>
+<text x="960.0" y="218.5" font-size="15" fill="#ffffff" font-weight="650" text-anchor="middle">Forecast table</text>
+<text x="960.0" y="238.5" font-size="12.5" fill="#c9d1db" font-weight="400" text-anchor="middle">issue_time, h, y, y_hat, y_naive</text>
+<text x="960.0" y="255.5" font-size="12.5" fill="#c9d1db" font-weight="400" text-anchor="middle">data/derived/forecasts/*.parquet</text>
+<path d="M960 290 L960 332" fill="none" stroke="#1c2430" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#a1c2430)"/>
+<rect x="835" y="332" width="250" height="104" rx="9" fill="#ffffff" stroke="#1c2430" stroke-width="1.6"/>
+<text x="960.0" y="364.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Score</text>
+<text x="960.0" y="384.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">validation.evaluate</text>
+<text x="960.0" y="401.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">metrics.summary</text>
+<text x="960.0" y="418.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">MLflow or console</text>
+<rect x="10" y="466" width="1075" height="234" rx="14" fill="#f4f5f7"/>
+<text x="28" y="492" font-size="12" fill="#5b6675" font-weight="700" text-anchor="start" letter-spacing="0.8">TRAINING PERIODS</text>
+<line x1="221.8" y1="516" x2="221.8" y2="668" stroke="#d8dde3"/>
+<text x="221.8" y="510" font-size="12" fill="#5b6675" font-weight="600" text-anchor="middle">2021</text>
+<line x1="364.8" y1="516" x2="364.8" y2="668" stroke="#d8dde3"/>
+<text x="364.8" y="510" font-size="12" fill="#5b6675" font-weight="600" text-anchor="middle">2022</text>
+<line x1="507.8" y1="516" x2="507.8" y2="668" stroke="#d8dde3"/>
+<text x="507.8" y="510" font-size="12" fill="#5b6675" font-weight="600" text-anchor="middle">2023</text>
+<line x1="650.8" y1="516" x2="650.8" y2="668" stroke="#d8dde3"/>
+<text x="650.8" y="510" font-size="12" fill="#5b6675" font-weight="600" text-anchor="middle">2024</text>
+<line x1="793.8" y1="516" x2="793.8" y2="668" stroke="#d8dde3"/>
+<text x="793.8" y="510" font-size="12" fill="#5b6675" font-weight="600" text-anchor="middle">2025</text>
+<line x1="936.8" y1="516" x2="936.8" y2="668" stroke="#d8dde3"/>
+<text x="936.8" y="510" font-size="12" fill="#5b6675" font-weight="600" text-anchor="middle">2026</text>
+<text x="28" y="547" font-size="13" fill="#1c2430" font-weight="650" text-anchor="start">Production LightGBM</text>
+<text x="28" y="597" font-size="13" fill="#1c2430" font-weight="650" text-anchor="start">CO₂ LightGBM</text>
+<text x="28" y="647" font-size="13" fill="#1c2430" font-weight="650" text-anchor="start">CO₂ LSTM</text>
+<rect x="186.0" y="522" width="463.3" height="40" rx="4" fill="#d5dbe3"/>
+<text x="418.4" y="546.5" font-size="12" fill="#1c2430" font-weight="600" text-anchor="middle">training</text>
+<rect x="650.8" y="522" width="141.5" height="40" rx="4" fill="#2a78d6"/>
+<text x="722.3" y="546.5" font-size="12" fill="#ffffff" font-weight="600" text-anchor="middle">search, 6 folds</text>
+<rect x="793.8" y="522" width="141.5" height="40" rx="4" fill="#1c2430"/>
+<text x="865.3" y="546.5" font-size="12" fill="#ffffff" font-weight="600" text-anchor="middle">test, 12 folds</text>
+<rect x="936.8" y="522" width="117.7" height="40" rx="4" fill="#eceef1"/>
+<text x="996.4" y="546.5" font-size="12" fill="#5b6675" font-weight="600" text-anchor="middle">inputs for CO₂</text>
+<rect x="329.0" y="572" width="463.3" height="40" rx="4" fill="#d5dbe3"/>
+<text x="561.4" y="596.5" font-size="12" fill="#1c2430" font-weight="600" text-anchor="middle">training</text>
+<rect x="793.8" y="572" width="141.5" height="20" rx="4" fill="#2a78d6"/>
+<text x="865.3" y="586.5" font-size="12" fill="#ffffff" font-weight="600" text-anchor="middle">search, 12 folds</text>
+<rect x="793.8" y="592" width="70.0" height="20" rx="4" fill="#d5dbe3"/>
+<text x="829.6" y="606.5" font-size="12" fill="#1c2430" font-weight="600" text-anchor="middle"></text>
+<rect x="865.3" y="592" width="70.0" height="20" rx="4" fill="#1baf7a"/>
+<text x="901.1" y="606.5" font-size="12" fill="#ffffff" font-weight="600" text-anchor="middle">validation</text>
+<rect x="936.8" y="572" width="117.7" height="40" rx="4" fill="#1c2430"/>
+<text x="996.4" y="596.5" font-size="12" fill="#ffffff" font-weight="600" text-anchor="middle">test, 5 folds</text>
+<rect x="329.0" y="622" width="534.8" height="40" rx="4" fill="#d5dbe3"/>
+<text x="597.2" y="646.5" font-size="12" fill="#1c2430" font-weight="600" text-anchor="middle">training</text>
+<rect x="865.3" y="622" width="70.0" height="40" rx="4" fill="#1baf7a"/>
+<text x="901.1" y="646.5" font-size="12" fill="#ffffff" font-weight="600" text-anchor="middle">validation</text>
+<rect x="936.8" y="622" width="117.7" height="40" rx="4" fill="#1c2430"/>
+<text x="996.4" y="646.5" font-size="12" fill="#ffffff" font-weight="600" text-anchor="middle">test, 5 folds</text>
+<text x="28" y="688" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="start">Before each search, validation or test fold the model is fitted again on everything earlier, so the training part grows.</text>
+</svg>

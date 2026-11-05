@@ -75,6 +75,16 @@ class Sequences:
             "future_std": np.nanstd(self.future[train], axis=(0, 1)),
         }
 
+    def table_scaling(
+        self, train: NDArray[np.bool_], hours: tuple[int, int]
+    ) -> dict[str, NDArray]:
+        """The statistics `table_loaders` standardises with."""
+        rows = self.table[:, np.arange(*hours)][train]
+        return {
+            "table_mean": np.nanmean(rows, axis=(0, 1)),
+            "table_std": np.nanstd(rows, axis=(0, 1)),
+        }
+
     def table_loaders(
         self,
         train: NDArray[np.bool_],

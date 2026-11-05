@@ -16,10 +16,10 @@ from pathlib import Path
 import pandas as pd
 
 import lgbm
+from config import LGBMConfig
 from data import DERIVED
 from lgbm.run_hpo import ROOT_CONFIGS, TASKS
 from loggers import ConsoleLogger, MLflowLogger
-from models import LGBMConfig
 from validation import Fold, evaluate, folds
 
 

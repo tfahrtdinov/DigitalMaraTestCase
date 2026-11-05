@@ -8,10 +8,15 @@ torch = pytest.importorskip("torch")
 
 from torch.utils.data import TensorDataset  # noqa: E402
 
+from config import TorchConfig  # noqa: E402
 from data.features.sequences import Sequences  # noqa: E402
-from models.nets import NETS  # noqa: E402
-from models.neural import MODELS  # noqa: E402
-from trainer import Trainer  # noqa: E402
+from loggers import ConsoleLogger  # noqa: E402
+from neural import fit as fit_network  # noqa: E402
+from neural import load, save  # noqa: E402
+from neural.models import MODELS  # noqa: E402
+from neural.nets import NETS  # noqa: E402
+from neural.run_holdout import forecast  # noqa: E402
+from neural.trainer import Trainer  # noqa: E402
 
 
 def sequences(n=40, hours=168):
@@ -92,32 +97,28 @@ def test_table_loaders_keep_issue_and_hour_order_and_drop_unknown_targets():
     assert Trainer.predict(model, val_loader).reshape(-1, 8).shape == (10, 8)
 
 
-def test_saved_checkpoints_reproduce_the_training_forecast(tmp_path):
-    from loggers import ConsoleLogger
-    from models import TorchConfig
-    from neural.predict import load, predict
-    from neural.run import forecast
-    from validation import Fold
-
+@pytest.mark.parametrize(
+    ("net", "params", "model"),
+    [
+        ("lstm", {"hidden": 8, "layers": 1, "dropout": 0.0}, "rnn"),
+        ("mlp", {"hidden": [8]}, "regression"),
+    ],
+)
+def test_holdout_forecast_comes_from_the_saved_networks(tmp_path, net, params, model):
     data = sequences()
-    start = cast(pd.Timestamp, pd.Timestamp("2025-01-31", tz="UTC"))  # issue 31
-    end = cast(pd.Timestamp, start + pd.Timedelta(days=10))
-    fold = Fold(start, start, end)
+    train = np.arange(len(data.y)) < 30
     config = TorchConfig(
-        net="lstm",
-        net_params={"hidden": 8, "layers": 1, "dropout": 0.0},
-        model="rnn",
-        epochs=1,
-        batch_size=8,
+        net=net, net_params=params, model=model, epochs=1, batch_size=8
     )
-    table = forecast(
-        config, data, fold, (0, 48), 2, "cpu", ConsoleLogger("t"), tmp_path / "m"
-    )
-    val = np.arange(len(data.y)) >= 30
-    co2 = predict(
-        load(sorted(tmp_path.glob("m_seed*.pt"))),
-        data.past[val],
-        data.future[val],
-        data.base[val][:, :48],
-    )
-    assert np.allclose(co2.ravel(), table.y_hat.to_numpy(), atol=1e-3)
+    tabular = net == "mlp"
+    loaders = data.table_loaders if tabular else data.loaders
+    rows, val_rows, y_scale = loaders(train, ~train, (0, 48), 8)
+    sizes = (data.table.shape[-1],) if tabular else (3, 2)
+    scaling = data.table_scaling(train, (0, 48)) if tabular else data.scaling(train)
+    fitted = fit_network(config, sizes, rows, val_rows, 0, "cpu", ConsoleLogger("t"))
+    save(tmp_path / "m_seed0.pt", fitted, config, sizes, (0, 48), y_scale, "", scaling)
+
+    table = forecast(load([tmp_path / "m_seed0.pt"]), data, "2025-01-31", "2025-02-10")
+    predicted = Trainer.predict(fitted, val_rows).reshape(10, -1)[:, :48] * y_scale
+    expected = np.clip(predicted + data.base[~train][:, :48], 0, None)
+    assert np.allclose(table.y_hat.to_numpy(), expected.ravel(), atol=1e-3)

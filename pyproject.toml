@@ -16,7 +16,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-# neural baselines (src/trainer.py, src/models/neural): uv sync --extra neural
+# LSTM and MLP (src/neural): uv sync --extra neural
 neural = ["torch>=2.15.0"]
 
 # Linux gets the CPU build of torch: the PyPI wheels there pull the CUDA stack (several GB).

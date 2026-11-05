@@ -124,7 +124,8 @@ Forecast once with these configurations; no decisions were made on this period.
 
 ```
 make co2-lstm DEVICE=cuda
-PYTHONPATH=src python -m neural.run configs/co2_lstm_h0-48.json --hours 0 48 --start 2026-01-01 --end 2026-10-27 --splits 5 --seeds 3 --data data/derived/co2_sequences.npz --device cuda
-PYTHONPATH=src python -m neural.run configs/co2_lstm_h48-168.json --hours 48 168 --start 2026-01-01 --end 2026-10-27 --splits 5 --seeds 3 --data data/derived/co2_far_sequences.npz --device cuda
-PYTHONPATH=src uv run python -m model_card_co2
+PYTHONPATH=src python -m neural.train configs/co2_lstm_h0-48.json --hours 0 48 --start 2026-08-28 --end 2026-10-27 --seeds 3 --data data/derived/co2_sequences.npz --save fitted --device cuda
+PYTHONPATH=src python -m neural.train configs/co2_lstm_h48-168.json --hours 48 168 --start 2026-08-28 --end 2026-10-27 --seeds 3 --data data/derived/co2_far_sequences.npz --save fitted --device cuda
+PYTHONPATH=src python -m neural.run_holdout fitted/co2_lstm_h0-48 --start 2026-08-28 --end 2026-10-27 --data data/derived/co2_sequences.npz
+PYTHONPATH=src python -m neural.run_holdout fitted/co2_lstm_h48-168 --start 2026-08-28 --end 2026-10-27 --data data/derived/co2_far_sequences.npz
 ```

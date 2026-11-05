@@ -1,6 +1,6 @@
 # Two training images from uv.lock, entry point `python -m <module under src/>`:
 #   lgbm    LightGBM steps          docker compose run --rm train lgbm.run_hpo solar
-#   neural  LSTM and MLP with torch docker compose run --rm train-neural neural.run ...
+#   neural  LSTM and MLP with torch docker compose run --rm train-neural neural.train ...
 # torch is the CPU build (see [tool.uv.sources] in pyproject.toml).
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim AS base
 
@@ -22,4 +22,4 @@ CMD ["lgbm.run_hpo", "--help"]
 FROM base AS neural
 RUN --mount=type=cache,target=/root/.cache/uv uv sync --locked --no-dev --no-install-project --extra neural
 COPY src ./src
-CMD ["neural.run", "--help"]
+CMD ["neural.train", "--help"]

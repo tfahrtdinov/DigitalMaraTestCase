@@ -8,8 +8,8 @@ import optuna
 import pandas as pd
 
 import lgbm
+from config import LGBMConfig
 from loggers import Logger
-from models import LGBMConfig
 from tasks import Task
 from validation import Fold, evaluate
 

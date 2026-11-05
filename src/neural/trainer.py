@@ -5,7 +5,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 
 from loggers import Logger
-from models.neural import NeuralModel
+from neural.models import NeuralModel
 
 
 def _on_device(model: NeuralModel, batch: tuple[torch.Tensor, ...]) -> tuple:

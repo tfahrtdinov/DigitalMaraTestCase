@@ -6,7 +6,7 @@ import optuna
 import pandas as pd
 from numpy.typing import NDArray
 
-from models import LGBMConfig, ModelConfig
+from config import LGBMConfig, ModelConfig
 
 
 @dataclass(frozen=True)

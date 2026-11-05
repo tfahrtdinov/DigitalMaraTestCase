@@ -13,9 +13,9 @@ The feature tables and model configs are committed, so the models run without ra
 ```bash
 uv sync --extra neural   # dependencies with torch (uv sync: without torch)
 make mlflow              # MLflow in Docker at http://localhost:5001; without it, runs go to mlruns/
-make forecasts           # production models, 2025
-make co2-forecast        # CO₂ LightGBM for days 1–2 and days 3–7
-make co2-lstm            # LSTM, DEVICE=cuda for a GPU
+make train               # all models on the validation periods, DEVICE=cuda for a GPU
+make train-test          # CO₂ models on the 2026 test folds
+make train-final         # models of the last test fold, overwrites fitted/
 ```
 
 `make hpo co2-hpo` repeats the parameter search and overwrites the configs. `make renewables co2` rebuilds the tables as well and needs the raw data (see [Data](#data)).
@@ -27,8 +27,8 @@ I trained the LSTM and tuned the days 3–7 LightGBM on Kaggle, with its GPU and
 ```bash
 make mlflow
 make image                    # LightGBM image, and the LSTM image with torch
-make forecasts co2-forecast DOCKER=1
-make co2-lstm DOCKER=1
+make train DOCKER=1
+make train-test DOCKER=1
 ```
 
 Rebuild the images after changing `src/`. Exit code 137 means the container ran out of memory; raise the limit in Docker Desktop.
@@ -37,123 +37,45 @@ Rebuild the images after changing `src/`. Exit code 137 means the container ran 
 
 ![One model run: split by time, train, forecast, score, with what is written through the Logger protocol to the console or MLflow](docs/figures/models.svg)
 
-| | LightGBM | LSTM |
-|---|---|---|
-| Targets | solar, onshore, offshore, CO₂ | CO₂ |
-| Input | parquet, one row per (issue, hour) | arrays, `co2_sequences.npz` and `co2_far_sequences.npz` |
-| Missing values | kept as NaN | zero plus a flag channel |
-| Scaling | none | per channel, on each fold's training issues |
-| Parameters | tuned with Optuna | set in JSON configs |
-| Runs on | local or Docker | local or Docker |
+Each branch has two CO₂ models. Days 1–2 predict the change from the last hour before issue; days 3–7 predict the deviation from the 28-day hourly profile. `Trainer` works with any model that follows the [`NeuralModel`](src/neural/models.py) protocol, and runs log through the [`Logger`](src/loggers.py) protocol.
 
-Each branch has two CO₂ models. Days 1–2 predict the change from the last hour before issue; days 3–7 predict the deviation from the 28-day hourly profile.
+Inputs, parameters, metrics and commands for each model are in its card: [CO₂ LSTM](docs/models/co2_lstm.md), [CO₂ LightGBM](docs/models/co2_lgbm.md), [solar](docs/models/solar.md), [onshore wind](docs/models/onshore.md), [offshore wind](docs/models/offshore.md).
 
-### Fit LightGBM from a config
+### Training pipeline
 
-Each LightGBM file in `configs/` holds the parameters of one model. The tables are committed, so no raw data is needed.
+LightGBM and the neural network follow the same scheme, and training starts from the files named on the frames.
 
-| Config | Task | Hours |
-|---|---|---|
-| `solar_lgbm.json` | `tasks.solar.SOLAR` | 0–167 |
-| `onshore_lgbm.json` | `tasks.wind.ONSHORE` | 0–167 |
-| `offshore_lgbm.json` | `tasks.wind.OFFSHORE` | 0–167 |
-| `co2_lgbm_h0-48.json` | `tasks.co2.CO2` | 0–47 |
-| `co2_far_lgbm_h48-168.json` | `tasks.co2.CO2_FAR` | 48–167 |
+![LightGBM and neural network training: config and data, a fit for each period on the past only, a forecast, a shared forecast table and score, with the training periods of each model](docs/figures/training.svg)
 
-This script fits the days 1–2 CO₂ model and scores it on the second half of 2025, with MAE 24.92 g/kWh. Run it from the repository root with `PYTHONPATH=src uv run python fit.py`.
+### Fit from a config
 
-```python
-import json
-
-import lgbm
-from metrics import summary
-from models import LGBMConfig
-from tasks.co2 import CO2
-
-with open("configs/co2_lgbm_h0-48.json") as f:
-    config = LGBMConfig(**json.load(f))
-
-df = CO2.load()
-df = df[df.h < 48]
-train = CO2.train_rows(df[df.issue_time < "2025-06-24"])  # 7-day gap before the test
-test = df[(df.issue_time >= "2025-07-01") & (df.issue_time < "2026-01-01")]
-
-model = lgbm.fit(config, CO2.X(train), CO2.y(train))
-forecast = CO2.scoring_table(test, lgbm.predict(model, CO2.X(test)))  # back to g/kWh
-print(summary(forecast))
-```
-
-`lgbm.fit` passes the config to `lightgbm.LGBMRegressor`, with `seed` as `random_state` and `subsample_freq=1`. The same fit as a command, with the forecasts saved to `data/derived/forecasts/` and the model to `fitted/`:
+Each file in `configs/` holds the parameters of one model. `run_holdout` reads the file, fits the model on the data before the test period and saves the forecasts; `--save` also keeps the fitted model. This command gives MAE 24.92 g/kWh on the second half of 2025:
 
 ```bash
 PYTHONPATH=src uv run python -m lgbm.run_holdout co2 --hours 0 48 \
     --start 2025-07-01 --end 2026-01-01 --splits 1 --save fitted --console
 ```
 
+The LightGBM tasks are `solar`, `onshore`, `offshore`, `co2` (hours 0–48) and `co2_far` (hours 48–168). The LSTM and MLP split the two steps: `neural.train` fits the networks of a config and saves them, and `neural.run_holdout` loads the saved networks and forecasts, without training:
+
+```bash
+PYTHONPATH=src uv run --extra neural python -m neural.train configs/co2_lstm_h0-48.json --hours 0 48 \
+    --start 2025-07-01 --end 2026-01-01 --seeds 3 --save data/derived/lstm_validation --console
+PYTHONPATH=src uv run --extra neural python -m neural.run_holdout data/derived/lstm_validation/co2_lstm_h0-48 \
+    --start 2025-07-01 --end 2026-01-01 --console
+```
+
 ## Trained models
 
-`models/` holds the models of the last test fold: trained on issues up to 2026-08-20, they forecast 2026-08-28 – 2026-10-26 with the numbers in the report.
+`fitted/` holds the models of the last test fold: trained on issues up to 2026-08-20, they forecast 2026-08-28 – 2026-10-26 with the numbers in the report. File names follow the configs, and the LSTM has one file per seed.
 
-| Files | Forecast |
-|---|---|
-| `co2_lstm_h0-48_seed{0,1,2}.pt` | CO₂, days 1–2, LSTM, mean over the seeds |
-| `co2_lstm_h48-168_seed{0,1,2}.pt` | CO₂, days 3–7, LSTM, mean over the seeds |
-| `co2_lgbm_h0-48.txt` | CO₂, days 1–2, LightGBM |
-| `co2_far_lgbm_h48-168.txt` | CO₂, days 3–7, LightGBM |
-| `solar_lgbm.txt`, `onshore_lgbm.txt`, `offshore_lgbm.txt` | production inputs of the CO₂ models |
-
-Run with `PYTHONPATH=src`, the LSTM and LightGBM in separate processes: on macOS torch and LightGBM in one process crash. For the last issue in the tables, days 1–2:
-
-```python
-from pathlib import Path
-from data.features.sequences import Sequences
-from neural.predict import load, predict
-
-data = Sequences.load("data/derived/co2_sequences.npz")
-lstm = load(sorted(Path("models").glob("co2_lstm_h0-48_seed*.pt")))
-co2_lstm = predict(lstm, data.past[-1:], data.future[-1:], data.base[-1:, :48])
-```
-
-```python
-import lightgbm as lgb
-from tasks.co2 import CO2
-
-rows = CO2.load().query("h < 48").tail(48)
-booster = lgb.Booster(model_file="models/co2_lgbm_h0-48.txt")
-co2_lgbm = rows["co2_last"] + booster.predict(CO2.X(rows))
-```
-
-Days 3–7 work the same way with `co2_far_sequences.npz`, `base[:, 48:168]` and `CO2_FAR`, whose base is `co2_prof`. Both results are in g CO₂/kWh.
-
-## Protocols and contracts
-
-| Name | Defined in | Role |
-|---|---|---|
-| `NeuralModel` protocol | [protocol.py](src/models/neural/protocol.py) | everything `Trainer` needs from a model |
-| `Logger` protocol | [loggers.py](src/loggers.py) | console or MLflow output |
-| `Task` | [task.py](src/tasks/task.py) | features, target and loading of one LightGBM task |
-| Forecast table | [metrics.py](src/metrics.py) | `issue_time, h, y, y_hat, y_naive`, the output of both branches |
+The LSTM files load with `neural.load` and forecast with `neural.predict` ([fit.py](src/neural/fit.py)). The LightGBM files open with `lightgbm.Booster(model_file=...)`; add `co2_last` to the output for days 1–2 and `co2_prof` for days 3–7 to get g CO₂/kWh. On macOS, run the LSTM and LightGBM in separate processes, because together they crash.
 
 ## Data
 
-The repository holds only the feature tables, 240 MB in `data/derived/`. Each row or array entry is one forecast issue, with inputs known at that issue.
+The repository holds only the feature tables, 240 MB in `data/derived/`: `solar_dataset.parquet`, `onshore_dataset.parquet`, `offshore_dataset.parquet` and `co2_dataset.parquet`, plus `co2_sequences.npz` and `co2_far_sequences.npz` for the LSTM.
 
-| Committed file | Contents | Used by |
-|---|---|---|
-| `solar_dataset.parquet`, `onshore_dataset.parquet`, `offshore_dataset.parquet` | weather forecasts, production history and target, per (issue, hour) | production LightGBM |
-| `co2_dataset.parquet` | production forecasts, measured history, day-ahead forecasts, weather, outages, targets and the TimesFM-3 reference, per (issue, hour) | CO₂ LightGBM |
-| `co2_sequences.npz`, `co2_far_sequences.npz` | the same inputs as arrays over the past 336 and next 168 hours, for days 1–2 and days 3–7 | LSTM |
-
-The raw data is 10 GB, so I do not commit it to git; I can send it on request. To rebuild the tables, put it in `data/raw/`.
-
-[loader.py](src/data/loader.py) reads `data/raw/`, `src/data/features/` builds the tables, and training reads the results from `data/derived/`. Tables are rebuilt by running their module; only the GEFS cache refreshes itself. Column details are in [data/README.md](data/README.md).
-
-| Source | Provides | Access | Files in `data/raw/` |
-|---|---|---|---|
-| NED | CO₂ factor, production by fuel, consumption | REST, key, EU VPN | `<series>_cls2_*.csv` |
-| ENTSO-E | offshore wind, nuclear, prices, day-ahead forecasts, outages | REST, key | `entsoe_*.csv` |
-| NOAA GEFS | ensemble wind and radiation from 2020-10 | dynamical.org, Zarr | `gefs/`, `gefs_neighbors/` |
-| ECMWF | wind, radiation, temperature from 2024-04 | Open-Meteo REST | `openmeteo/` |
+The raw data from NED, ENTSO-E, NOAA GEFS and ECMWF is 10 GB, so I do not commit it to git; I can send it on request. To rebuild the tables, put it in `data/raw/` and run `make renewables co2`.
 
 ## Validation
 
@@ -168,7 +90,5 @@ Folds use an expanding window with a 7-day gap before each block.
 
 ## Known gaps
 
-- The TimesFM-3 reference (`data/derived/references/`) is not in the repository, and the scripts that computed it were removed. `make co2-tables` reads it, so the CO₂ table cannot be rebuilt without that folder. The table in the repository already holds it as `y_ref`.
-- `lgbm.run_holdout` names its output by task and period regardless of `--hours`, so another segment overwrites the file.
+- The CO₂ table cannot be rebuilt from a clean clone: it reads the TimesFM-3 reference from `data/derived/references/`, which is not in the repository, and the scripts that computed it were removed. The committed table already holds it as `y_ref`.
 - Production forecasts for 2021–2023 use parameters tuned on 2024; they enter only the CO₂ training data.
-- [data/README.md](data/README.md) is in Russian and describes the previous setup.
