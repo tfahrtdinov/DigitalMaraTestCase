@@ -27,7 +27,7 @@ def test_evaluate_logs_summary_with_prefix():
     )
     logger = MemoryLogger()
     scores = validation.evaluate(df, logger, prefix="solar/").to_dict()
-    assert (scores["mae"], scores["improvement_%"]) == (2.0, 50.0)
+    assert (scores["mae"], scores["improvement_pct"]) == (2.0, 50.0)
     assert logger.records == [
         (None, {f"solar/{k}": float(v) for k, v in scores.items()})
     ]

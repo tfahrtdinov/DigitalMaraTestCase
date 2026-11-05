@@ -19,4 +19,4 @@ def test_summary_per_day_and_spearman():
     s = metrics.summary(df).to_dict()
     assert (s["mae_d1"], s["mae_d2"], s["mae_d7"]) == (1.0, 3.0, 3.0)
     assert s["spearman"] == 1.0 and s["bias"] > 0
-    assert "improvement_%" not in s
+    assert "improvement_pct" not in s

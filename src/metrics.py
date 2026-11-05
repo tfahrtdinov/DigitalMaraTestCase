@@ -42,7 +42,7 @@ def summary(df: pd.DataFrame) -> pd.Series:
     y, y_hat = df["y"].to_numpy(), df["y_hat"].to_numpy()
     out = {"mae": mae(y, y_hat), "rmse": rmse(y, y_hat), "bias": bias(y, y_hat)}
     if "y_naive" in df:
-        out["improvement_%"] = improvement(y, y_hat, df["y_naive"].to_numpy())
+        out["improvement_pct"] = improvement(y, y_hat, df["y_naive"].to_numpy())
     if "issue_time" in df:
         out["spearman"] = spearman_within_window(df)
     day = df["h"].to_numpy() // 24
