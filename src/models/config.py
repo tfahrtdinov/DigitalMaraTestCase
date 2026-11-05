@@ -21,7 +21,6 @@ class LGBMConfig(ModelConfig):
     subsample: float = 0.8
     colsample_bytree: float = 0.8
     reg_lambda: float = 0.0
-    early_stopping_round: int = 100  # on the eval_set passed to fit; 0 disables
 
 
 @dataclass
@@ -34,5 +33,4 @@ class TorchConfig(ModelConfig):
     model_params: dict = field(default_factory=dict)  # e.g. lr, weight_decay
     epochs: int = 30
     batch_size: int = 1024
-    patience: int = 5  # epochs without improvement on the validation set; 0 disables
     threads: int = 1
