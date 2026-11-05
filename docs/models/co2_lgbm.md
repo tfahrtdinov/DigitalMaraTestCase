@@ -45,8 +45,7 @@ values (8 features) are empty past h ≈ 16. Lists: `src/tasks/co2.py`. Missing 
 ## Hyperparameter search
 
 Optuna TPE, 20 trials, objective: MAE averaged over 12 monthly folds of 2025. Trials of hours
-0–47 are in MLflow (experiment `hpo`, run `co2_lgbm_h0-48`); hours 48–167 ran on a Kaggle CPU
-session, log `data/logs/kaggle_hpo/co2-far-hpo.log`.
+0–47 are in MLflow (experiment `hpo`, run `co2_lgbm_h0-48`); the trials of hours 48–167 were logged to the console of that run.
 
 | parameter | range | scale |
 |---|---|---|
@@ -143,7 +142,6 @@ Top 15 by share of split gain, models fit on all issues before 2025-12-25.
 
 ```
 make co2
-PYTHONPATH=src uv run python -m lgbm.run_holdout co2 --hours 0 48 --start 2026-01-01 --end 2026-10-27 --splits 5
-PYTHONPATH=src uv run python -m lgbm.run_holdout co2_far --hours 48 168 --start 2026-01-01 --end 2026-10-27 --splits 5
-PYTHONPATH=src uv run python -m model_card_co2
+PYTHONPATH=src uv run python -m lgbm.run_folds co2 --hours 0 48 --start 2026-01-01 --end 2026-10-27 --splits 5
+PYTHONPATH=src uv run python -m lgbm.run_folds co2_far --hours 48 168 --start 2026-01-01 --end 2026-10-27 --splits 5
 ```

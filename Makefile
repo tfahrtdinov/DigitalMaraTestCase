@@ -15,7 +15,11 @@ NEURAL_FIT := data/derived/lstm_validation
 TEST_WINDOW := --start 2026-01-01 --end 2026-10-27
 TEST_SPLITS := 5
 NEURAL_TEST := data/derived/lstm_test
+TEST_FOLDS  := 2026-01-01,2026-03-01 2026-03-01,2026-04-30 2026-04-30,2026-06-29 2026-06-29,2026-08-28 2026-08-28,2026-10-27
 LAST_FOLD   := --start 2026-08-28 --end 2026-10-27
+LAST_START  := 2026-08-28
+# the last of the 30 production folds below
+PRODUCTION_LAST := 2026-09-02
 
 # Production forecasts fed to the CO2 table; the period must match RENEWABLES_PERIOD in
 # src/data/features/co2.py. 30 folds refit the models about every two months.
@@ -56,10 +60,10 @@ hpo: ## Tune the production models on 2024
 	for t in $(TASKS); do $(RUN) lgbm.run_hpo $$t --trials $(TRIALS) || exit 1; done
 
 forecasts: ## Forecast production for 2025
-	for t in $(TASKS); do $(RUN) lgbm.run_holdout $$t || exit 1; done
+	for t in $(TASKS); do $(RUN) lgbm.run_folds $$t || exit 1; done
 
 inputs: ## Forecast production for the CO2 table
-	for t in $(TASKS); do $(RUN) lgbm.run_holdout $$t --start $(INPUTS_START) --end $(INPUTS_END) --splits $(INPUTS_SPLITS) || exit 1; done
+	for t in $(TASKS); do $(RUN) lgbm.run_folds $$t --start $(INPUTS_START) --end $(INPUTS_END) --splits $(INPUTS_SPLITS) || exit 1; done
 
 renewables: tables hpo forecasts inputs ## All production steps
 
@@ -72,8 +76,8 @@ co2-hpo: ## Tune the CO2 LightGBM models on 2025
 	$(RUN) lgbm.run_hpo co2_far --hours 48 168 $(CO2_SEARCH)
 
 co2-forecast: ## Forecast CO2 with LightGBM
-	$(RUN) lgbm.run_holdout co2 --hours 0 48 $(CO2_WINDOW)
-	$(RUN) lgbm.run_holdout co2_far --hours 48 168 $(CO2_WINDOW)
+	$(RUN) lgbm.run_folds co2 --hours 0 48 $(CO2_WINDOW)
+	$(RUN) lgbm.run_folds co2_far --hours 48 168 $(CO2_WINDOW)
 
 co2: co2-tables co2-hpo co2-forecast ## All CO2 LightGBM steps
 
@@ -86,20 +90,22 @@ co2-lstm: ## Train the LSTM on DEVICE (default cpu) and forecast the second half
 train: forecasts co2-forecast co2-lstm ## Train all models on the validation periods
 
 co2-lgbm-test: ## Refit the CO2 LightGBM on the 2026 test folds and forecast them
-	$(RUN) lgbm.run_holdout co2 --hours 0 48 $(TEST_WINDOW) --splits $(TEST_SPLITS)
-	$(RUN) lgbm.run_holdout co2_far --hours 48 168 $(TEST_WINDOW) --splits $(TEST_SPLITS)
+	$(RUN) lgbm.run_folds co2 --hours 0 48 $(TEST_WINDOW) --splits $(TEST_SPLITS)
+	$(RUN) lgbm.run_folds co2_far --hours 48 168 $(TEST_WINDOW) --splits $(TEST_SPLITS)
 
 co2-lstm-test: ## Refit the LSTM on the 2026 test folds on DEVICE and forecast them
-	$(RUN_NEURAL) neural.train configs/co2_lstm_h0-48.json --hours 0 48 --seeds 3 --data data/derived/co2_sequences.npz $(TEST_WINDOW) --splits $(TEST_SPLITS) --save $(NEURAL_TEST) --device $(DEVICE)
-	$(RUN_NEURAL) neural.train configs/co2_lstm_h48-168.json --hours 48 168 --seeds 3 --data data/derived/co2_far_sequences.npz $(TEST_WINDOW) --splits $(TEST_SPLITS) --save $(NEURAL_TEST) --device $(DEVICE)
-	$(RUN_NEURAL) neural.run_holdout $(NEURAL_TEST)/co2_lstm_h0-48 --data data/derived/co2_sequences.npz $(TEST_WINDOW)
-	$(RUN_NEURAL) neural.run_holdout $(NEURAL_TEST)/co2_lstm_h48-168 --data data/derived/co2_far_sequences.npz $(TEST_WINDOW)
+	for f in $(TEST_FOLDS); do s=$${f%,*}; e=$${f#*,}; \
+	$(RUN_NEURAL) neural.train configs/co2_lstm_h0-48.json --hours 0 48 --seeds 3 --data data/derived/co2_sequences.npz --start $$s --end $$e --save $(NEURAL_TEST)/$$s --device $(DEVICE) || exit 1; \
+	$(RUN_NEURAL) neural.train configs/co2_lstm_h48-168.json --hours 48 168 --seeds 3 --data data/derived/co2_far_sequences.npz --start $$s --end $$e --save $(NEURAL_TEST)/$$s --device $(DEVICE) || exit 1; \
+	$(RUN_NEURAL) neural.run_holdout $(NEURAL_TEST)/$$s/co2_lstm_h0-48 --data data/derived/co2_sequences.npz --start $$s --end $$e || exit 1; \
+	$(RUN_NEURAL) neural.run_holdout $(NEURAL_TEST)/$$s/co2_lstm_h48-168 --data data/derived/co2_far_sequences.npz --start $$s --end $$e || exit 1; \
+	done
 
 train-test: co2-lgbm-test co2-lstm-test ## Refit the CO2 models on the 2026 test folds
 
 train-final: ## Train the models of the last test fold; overwrites fitted/
-	for t in $(TASKS); do $(RUN) lgbm.run_holdout $$t $(LAST_FOLD) --splits 1 --save fitted || exit 1; done
-	$(RUN) lgbm.run_holdout co2 --hours 0 48 $(LAST_FOLD) --splits 1 --save fitted
-	$(RUN) lgbm.run_holdout co2_far --hours 48 168 $(LAST_FOLD) --splits 1 --save fitted
+	for t in $(TASKS); do $(RUN) lgbm.train $$t --start $(PRODUCTION_LAST) || exit 1; done
+	$(RUN) lgbm.train co2 --hours 0 48 --start $(LAST_START)
+	$(RUN) lgbm.train co2_far --hours 48 168 --start $(LAST_START)
 	$(RUN_NEURAL) neural.train configs/co2_lstm_h0-48.json --hours 0 48 --seeds 3 --data data/derived/co2_sequences.npz $(LAST_FOLD) --save fitted --device $(DEVICE)
 	$(RUN_NEURAL) neural.train configs/co2_lstm_h48-168.json --hours 48 168 --seeds 3 --data data/derived/co2_far_sequences.npz $(LAST_FOLD) --save fitted --device $(DEVICE)

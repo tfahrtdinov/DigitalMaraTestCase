@@ -127,6 +127,5 @@ Share of total split gain, model fit on all issues before 2025.
 ```
 PYTHONPATH=src uv run python -m data.features.solar
 PYTHONPATH=src uv run python -m lgbm.run_hpo solar
-PYTHONPATH=src uv run python -m lgbm.run_holdout solar
-PYTHONPATH=src uv run python -m model_card solar
+PYTHONPATH=src uv run python -m lgbm.run_folds solar
 ```

@@ -49,11 +49,11 @@ LightGBM and the neural network follow the same scheme, and training starts from
 
 ### Fit from a config
 
-Each file in `configs/` holds the parameters of one model. `run_holdout` reads the file, fits the model on the data before the test period and saves the forecasts; `--save` also keeps the fitted model. This command gives MAE 24.92 g/kWh on the second half of 2025:
+Each file in `configs/` holds the parameters of one model. `lgbm.run_folds` reads the file, fits the model on the data before each period and saves the forecasts. `lgbm.train` fits one model and saves it, and `lgbm.run_holdout` loads a saved model and forecasts, without training. This command gives MAE 24.92 g/kWh on the second half of 2025:
 
 ```bash
-PYTHONPATH=src uv run python -m lgbm.run_holdout co2 --hours 0 48 \
-    --start 2025-07-01 --end 2026-01-01 --splits 1 --save fitted --console
+PYTHONPATH=src uv run python -m lgbm.run_folds co2 --hours 0 48 \
+    --start 2025-07-01 --end 2026-01-01 --splits 1 --console
 ```
 
 The LightGBM tasks are `solar`, `onshore`, `offshore`, `co2` (hours 0–48) and `co2_far` (hours 48–168). The LSTM and MLP split the two steps: `neural.train` fits the networks of a config and saves them, and `neural.run_holdout` loads the saved networks and forecasts, without training:

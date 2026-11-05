@@ -68,7 +68,7 @@ There was no hyperparameter search; these are starting values.
 | gradient clip | 1.0 |
 | scaling | inputs and target standardised on the training issues of each fold; gaps become 0 with a flag channel |
 | seeds | forecast = mean over seeds: validation 5 (hours 0–47) and 3 (hours 48–167), test 3 |
-| hardware | Kaggle, Tesla T4 |
+| hardware | GPU, Tesla T4 |
 
 Mean over the seeds of the first 2026 fold (training up to 2025-12-24).
 

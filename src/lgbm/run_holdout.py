@@ -1,82 +1,48 @@
-"""PYTHONPATH=src uv run python -m lgbm.run_holdout solar [--start 2025-01-01 --end 2026-01-01
-    --splits 12] [--hours 0 168] [--console]
+"""PYTHONPATH=src uv run python -m lgbm.run_holdout co2 fitted/co2_lgbm_h0-48.txt --hours 0 48
+    --start 2026-08-28 --end 2026-10-27 [--console]
 
-Out-of-sample forecasts with the tuned LightGBM configs: [start, end) is cut into
---splits equal folds, each forecast by a model refitted on everything before it minus the
-7-day gap; one model per hour segment of --hours (edges). The defaults are the 2025 holdout
-and write data/derived/forecasts/<task>_lgbm.parquet; another range gets the suffix
-_<start>_<end>. --save writes the model of each segment; with several folds the last stays.
-Metrics go to MLflow (experiment "holdout") unless --console is given.
+Loads a saved LightGBM model (lgbm.train), forecasts the issues of [start, end) and scores
+them. Nothing is trained. Forecasts go to data/derived/forecasts/<model>_<start>_<end>.parquet.
 """
 
 import argparse
-import json
 from pathlib import Path
 
+import lightgbm as lgb
+import numpy as np
 import pandas as pd
 
-import lgbm
-from config import LGBMConfig
 from data import DERIVED
-from lgbm.run_hpo import ROOT_CONFIGS, TASKS
+from lgbm.run_hpo import TASKS
 from loggers import ConsoleLogger, MLflowLogger
-from validation import Fold, evaluate, folds
-
-
-def config_name(task: str, start: int, end: int, full: bool) -> str:
-    return f"{task}_lgbm" if full else f"{task}_lgbm_h{start}-{end}"
+from validation import evaluate
 
 
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("task", choices=TASKS)
-    p.add_argument("--hours", type=int, nargs="+", default=[0, 168])
-    p.add_argument("--start", default="2025-01-01")
-    p.add_argument("--end", default="2026-01-01")
-    p.add_argument("--splits", type=int, default=12)
-    p.add_argument("--save", type=Path, help="folder for the models")
+    p.add_argument("model")
+    p.add_argument("--hours", type=int, nargs=2, default=[0, 168])
+    p.add_argument("--start", required=True)
+    p.add_argument("--end", required=True)
     p.add_argument("--console", action="store_true", help="print instead of MLflow")
     a = p.parse_args()
 
     task = TASKS[a.task]
     df = task.load()
-    name = f"{task.name}_lgbm"
-    if (a.start, a.end) != ("2025-01-01", "2026-01-01"):
-        name += f"_{a.start}_{a.end}"
-    full = a.hours == [0, 168]
-    tables = []
-    for start, end in zip(a.hours[:-1], a.hours[1:], strict=True):
-        with open(
-            f"{ROOT_CONFIGS}/{config_name(task.name, start, end, full)}.json"
-        ) as f:
-            config = LGBMConfig(**json.load(f))
-        rows = df.loc[(df.h >= start) & (df.h < end)]
-        saved = config_name(task.name, start, end, full)
-        target = a.save / f"{saved}.txt" if a.save else None
-        tables += [
-            forecast(task, config, rows, fold, target)
-            for fold in folds(a.start, a.end, a.splits)
-        ]
-    table = pd.concat(tables).sort_values(["issue_time", "h"])
-    (DERIVED / "forecasts").mkdir(parents=True, exist_ok=True)
-    table.to_parquet(DERIVED / "forecasts" / f"{name}.parquet", index=False)
+    rows = df.loc[
+        (df.h >= a.hours[0])
+        & (df.h < a.hours[1])
+        & (df.issue_time >= pd.Timestamp(a.start, tz="UTC"))
+        & (df.issue_time < pd.Timestamp(a.end, tz="UTC"))
+    ]
+    booster = lgb.Booster(model_file=a.model)
+    table = task.scoring_table(rows, np.asarray(booster.predict(task.X(rows))))
+    name = f"{Path(a.model).stem}_{a.start}_{a.end}"
     logger = ConsoleLogger(name) if a.console else MLflowLogger("holdout", name)
     with logger:
-        logger.log_params(
-            {"hours": a.hours, "start": a.start, "end": a.end, "splits": a.splits}
-        )
         evaluate(table, logger)
-
-
-def forecast(
-    task, config: LGBMConfig, df: pd.DataFrame, fold: Fold, save: Path | None = None
-) -> pd.DataFrame:
-    fit_rows, val_rows = task.train_rows(fold.train(df)), fold.val(df)
-    booster = lgbm.fit(config, task.X(fit_rows), task.y(fit_rows))
-    if save is not None:
-        save.parent.mkdir(parents=True, exist_ok=True)
-        booster.booster_.save_model(save)
-    return task.scoring_table(val_rows, lgbm.predict(booster, task.X(val_rows)))
+    table.to_parquet(DERIVED / "forecasts" / f"{name}.parquet", index=False)
 
 
 if __name__ == "__main__":

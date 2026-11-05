@@ -126,6 +126,5 @@ Share of total split gain, model fit on all issues before 2025.
 ```
 PYTHONPATH=src uv run python -m data.features.wind offshore
 PYTHONPATH=src uv run python -m lgbm.run_hpo offshore
-PYTHONPATH=src uv run python -m lgbm.run_holdout offshore
-PYTHONPATH=src uv run python -m model_card offshore
+PYTHONPATH=src uv run python -m lgbm.run_folds offshore
 ```

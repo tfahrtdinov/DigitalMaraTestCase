@@ -1,3 +1,3 @@
-from .fit import fit, predict
+from .fit import config_name, fit, predict
 
-__all__ = ["fit", "predict"]
+__all__ = ["config_name", "fit", "predict"]
