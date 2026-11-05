@@ -1,9 +1,11 @@
-"""PYTHONPATH=src python -m lstm.run configs/co2_lstm_h0-48.json --hours 0 48
+"""PYTHONPATH=src python -m neural.run configs/co2_lstm_h0-48.json --hours 0 48
     --start 2025-01-01 --end 2026-01-01 --splits 12 [--seeds 5] [--device cuda] [--console]
 
-Trains the RNN model of the config on the expanding folds of [start, end), once per
+Trains the neural model of the config (one row per issue and hour for an MLP, whole
+windows for an LSTM) on the expanding folds of [start, end), once per
 seed, and averages the seeds. Metrics per fold and overall go to MLflow (experiment
-"neural") unless --console is given; forecasts go to <out>/<config name>.parquet."""
+"neural") unless --console is given; forecasts go to <out>/<config name>.parquet, with the suffix _<start>_<end> for any period
+other than the validation half-year."""
 
 import argparse
 import json
@@ -36,15 +38,19 @@ def forecast(
     val = np.asarray(
         (data.issue_time >= fold.val_start) & (data.issue_time < fold.val_end)
     )
-    train_loader, val_loader, y_scale = data.loaders(
-        train, val, hours, config.batch_size
+    tabular = config.net == "mlp"
+    loaders = data.table_loaders if tabular else data.loaders
+    train_loader, val_loader, y_scale = loaders(train, val, hours, config.batch_size)
+    sizes = (
+        (data.table.shape[-1],)
+        if tabular
+        else (data.past.shape[-1], data.future.shape[-1])
     )
+    h = np.arange(*hours)
     predictions = []
     for seed in range(config.seed, config.seed + seeds):
         torch.manual_seed(seed)
-        net = NETS[config.net](
-            data.past.shape[-1], data.future.shape[-1], **config.net_params
-        )
+        net = NETS[config.net](*sizes, **config.net_params)
         model = MODELS[config.model](net, **config.model_params)
         with logger.child(f"{fold.val_start:%Y-%m-%d}_seed{seed}") as run_logger:
             Trainer(
@@ -56,16 +62,19 @@ def forecast(
                 config.grad_clip,
                 config.one_cycle,
             ).fit(model, train_loader, val_loader)
-        predictions.append(Trainer.predict(model, val_loader))
-    y_hat = np.mean(predictions, axis=0) * y_scale + data.co2_last[val, None]
+        predicted = Trainer.predict(model, val_loader)
+        predictions.append(
+            predicted.reshape(-1, len(h)) if tabular else predicted[:, h]
+        )
+    base = data.base[val][:, h]
+    y_hat = np.mean(predictions, axis=0) * y_scale + base
 
-    h = np.arange(*hours)
     table = pd.DataFrame(
         {
             "issue_time": np.repeat(data.issue_time[val], len(h)),
             "h": np.tile(h, val.sum()),
-            "y": (data.y[val] + data.co2_last[val, None])[:, h].ravel(),
-            "y_hat": np.clip(y_hat[:, h], 0, None).ravel(),
+            "y": (data.y[val][:, h] + base).ravel(),
+            "y_hat": np.clip(y_hat, 0, None).ravel(),
             "y_naive": data.y_ref[val][:, h].ravel(),
         }
     )
@@ -89,6 +98,8 @@ def main() -> None:
     with open(a.config) as f:
         config = TorchConfig(**json.load(f))
     name = Path(a.config).stem
+    if (a.start, a.end) != ("2025-07-01", "2026-01-01"):
+        name += f"_{a.start}_{a.end}"
     data = Sequences.load(a.data)
     hours = (a.hours[0], a.hours[1])
     logger = ConsoleLogger(name) if a.console else MLflowLogger("neural", name)

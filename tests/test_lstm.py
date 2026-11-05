@@ -24,8 +24,9 @@ def sequences(n=40, hours=168):
         rng.normal(size=(n, 24, 3)).astype(np.float32),
         np.nan_to_num(future),
         y,
-        rng.normal(size=n).astype(np.float32),
+        rng.normal(size=(n, hours)).astype(np.float32),
         np.zeros((n, hours), np.float32),
+        np.nan_to_num(future),
     )
 
 
@@ -77,3 +78,15 @@ def test_predict_returns_numpy_for_all_validation_issues():
     data = sequences()
     model, _, val_loader = fit(data, epochs=1)
     assert Trainer.predict(model, val_loader).shape == (10, 168)
+
+
+def test_table_loaders_keep_issue_and_hour_order_and_drop_unknown_targets():
+    data = sequences()
+    train = np.arange(len(data.y)) < 30
+    train_loader, val_loader, _ = data.table_loaders(train, ~train, (160, 168), 16)
+    assert len(cast(TensorDataset, train_loader.dataset)) == 30 * 7
+    assert len(cast(TensorDataset, val_loader.dataset)) == 10 * 8
+    net = NETS["mlp"](2, hidden=[8])
+    model = MODELS["regression"](net)
+    Trainer(1).fit(model, train_loader, val_loader)
+    assert Trainer.predict(model, val_loader).reshape(-1, 8).shape == (10, 8)

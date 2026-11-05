@@ -1,7 +1,8 @@
-"""Arrays of the RNN models from the CO2 table, one file that needs no raw data:
-data/derived/co2_sequences.npz. Past: 336 hours of every measured series before issue and
+"""Arrays of the neural models from the CO2 table, one file that needs no raw data:
+data/derived/co2_sequences.npz (days 1-2) and co2_far_sequences.npz (days 3-7). Past: 336 hours of every measured series before issue and
 the calendar. Future: the inputs of the CO2 table that change within a forecast window and
-the calendar. Channels with gaps get a flag channel; the flag carries the missing values.
+the calendar. Table: every input of the LightGBM model, for the MLP. Channels with gaps get
+a flag channel; the flag carries the missing values.
 
 Run: PYTHONPATH=src uv run python -m data.features.co2_sequences
 """
@@ -13,7 +14,15 @@ import pandas as pd
 
 from data.features.co2 import measured
 from data.loader import DERIVED
-from tasks.co2 import DAY_AHEAD, FORECAST, OUTAGES, WEATHER_COLUMNS
+from tasks.co2 import (
+    CALENDAR,
+    DAY_AHEAD,
+    FAR_FEATURES,
+    FEATURES,
+    FORECAST,
+    OUTAGES,
+    WEATHER_COLUMNS,
+)
 
 PAST_HOURS = 336
 N_HOURS = 168
@@ -30,6 +39,16 @@ FUTURE = [
     *WEATHER_COLUMNS,
     *OUTAGES,
 ]
+# file -> columns of the future channels and of the MLP table, target, what it is relative to
+SETS = {
+    "co2_sequences": (FUTURE, FEATURES, "y", "co2_last"),
+    "co2_far_sequences": (
+        [c for c in FAR_FEATURES if c not in CALENDAR],
+        FAR_FEATURES,
+        "y_far",
+        "co2_prof",
+    ),
+}
 
 
 def calendar(times: pd.DatetimeIndex) -> pd.DataFrame:
@@ -53,7 +72,14 @@ def with_gap_flags(values: pd.DataFrame) -> pd.DataFrame:
     return pd.concat([values, flags], axis=1)
 
 
-def build(table: pd.DataFrame, hourly: pd.DataFrame) -> dict:
+def build(
+    table: pd.DataFrame,
+    hourly: pd.DataFrame,
+    future_columns: list[str],
+    table_columns: list[str],
+    target: str,
+    base: str,
+) -> dict:
     table = table.sort_values(["issue_time", "h"]).reset_index(drop=True)
     issues = pd.DatetimeIndex(table.issue_time.unique())
     assert len(table) == len(issues) * N_HOURS
@@ -68,21 +94,23 @@ def build(table: pd.DataFrame, hourly: pd.DataFrame) -> dict:
 
     future = pd.concat(
         [
-            table[FUTURE],
+            table[future_columns],
             calendar(pd.DatetimeIndex(table.valid_time)).reset_index(drop=True),
             (table.h / N_HOURS).rename("h"),
         ],
         axis=1,
     )
     future = with_gap_flags(cast(pd.DataFrame, future))
+    rows = with_gap_flags(cast(pd.DataFrame, table[table_columns]))
     n = len(issues)
     shape = (n, N_HOURS)
     return {
         "issue_time": issues[keep].tz_localize(None).to_numpy("datetime64[ns]"),
         "past": past.to_numpy(np.float32)[windows],
         "future": future.to_numpy(np.float32).reshape(*shape, -1)[keep],
-        "y": table.y.to_numpy(np.float32).reshape(shape)[keep],
-        "co2_last": table.co2_last.to_numpy(np.float32).reshape(shape)[keep, 0],
+        "table": rows.to_numpy(np.float32).reshape(*shape, -1)[keep],
+        "y": table[target].to_numpy(np.float32).reshape(shape)[keep],
+        "base": table[base].to_numpy(np.float32).reshape(shape)[keep],
         "y_ref": table.y_ref.to_numpy(np.float32).reshape(shape)[keep],
         "past_columns": np.array(past.columns),
         "future_columns": np.array(future.columns),
@@ -91,13 +119,15 @@ def build(table: pd.DataFrame, hourly: pd.DataFrame) -> dict:
 
 def main() -> None:
     table = pd.read_parquet(DERIVED / "co2_dataset.parquet")
-    arrays = build(table, measured())
-    out = DERIVED / "co2_sequences.npz"
-    np.savez_compressed(out, **arrays)
-    print(
-        f"{out}: {len(arrays['issue_time'])} issues, past {arrays['past'].shape}, "
-        f"future {arrays['future'].shape}"
-    )
+    hourly = measured()
+    for name, (future, rows, target, base) in SETS.items():
+        arrays = build(table, hourly, future, rows, target, base)
+        out = DERIVED / f"{name}.npz"
+        np.savez_compressed(out, **arrays)
+        print(
+            f"{out}: {len(arrays['issue_time'])} issues, past {arrays['past'].shape}, "
+            f"future {arrays['future'].shape}, table {arrays['table'].shape}"
+        )
 
 
 if __name__ == "__main__":

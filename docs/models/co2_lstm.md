@@ -128,4 +128,3 @@ PYTHONPATH=src python -m neural.run configs/co2_lstm_h0-48.json --hours 0 48 --s
 PYTHONPATH=src python -m neural.run configs/co2_lstm_h48-168.json --hours 48 168 --start 2026-01-01 --end 2026-10-27 --splits 5 --seeds 3 --data data/derived/co2_far_sequences.npz --device cuda
 PYTHONPATH=src uv run python -m model_card_co2
 ```
-Kaggle: `kaggle/push.sh "message" --run`, then `kaggle/pull.sh`.

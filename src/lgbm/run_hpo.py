@@ -18,6 +18,7 @@ TASKS = {
     "onshore": wind.ONSHORE,
     "offshore": wind.OFFSHORE,
     "co2": co2.CO2,
+    "co2_far": co2.CO2_FAR,
 }
 ROOT_CONFIGS = "configs"
 

@@ -1,4 +1,4 @@
-"""Tensors of the RNN models from data/derived/co2_sequences.npz. Scaling is fitted on
+"""Tensors of the neural models from data/derived/co2_sequences.npz. Scaling is fitted on
 the training issues of each fold."""
 
 from dataclasses import dataclass
@@ -25,9 +25,10 @@ class Sequences:
     issue_time: pd.DatetimeIndex
     past: NDArray[np.float32]  # (issues, past hours, channels)
     future: NDArray[np.float32]  # (issues, 168, channels)
-    y: NDArray[np.float32]  # (issues, 168): change of the factor from the last hour
-    co2_last: NDArray[np.float32]  # (issues,)
+    y: NDArray[np.float32]  # (issues, 168): target, the factor relative to `base`
+    base: NDArray[np.float32]  # (issues, 168)
     y_ref: NDArray[np.float32]  # (issues, 168): reference forecast of the factor
+    table: NDArray[np.float32]  # (issues, 168, channels): inputs of the tabular models
 
     @classmethod
     def load(cls, path: str | Path) -> "Sequences":
@@ -37,8 +38,9 @@ class Sequences:
             z["past"],
             z["future"],
             z["y"],
-            z["co2_last"],
+            z["base"],
             z["y_ref"],
+            z["table"],
         )
 
     def loaders(
@@ -63,3 +65,30 @@ class Sequences:
             return DataLoader(data, batch_size=batch_size, shuffle=shuffle)
 
         return loader(train, True), loader(val, False), y_scale
+
+    def table_loaders(
+        self,
+        train: NDArray[np.bool_],
+        val: NDArray[np.bool_],
+        hours: tuple[int, int],
+        batch_size: int,
+    ) -> tuple[DataLoader, DataLoader, float]:
+        """One row per (issue, hour) for hours in [hours[0], hours[1]). Training rows
+        without a target are dropped; validation rows stay in (issue, hour) order."""
+        h = np.arange(*hours)
+        y_scale = float(np.nanstd(self.y[train][:, h]))
+        x = _scale(self.table[:, h], train)
+        y = (self.y[:, h] / y_scale).astype(np.float32)
+
+        def loader(xs: NDArray, ys: NDArray, shuffle: bool) -> DataLoader:
+            data = TensorDataset(torch.from_numpy(xs), torch.from_numpy(ys))
+            return DataLoader(data, batch_size=batch_size, shuffle=shuffle)
+
+        x_train, y_train = x[train].reshape(-1, x.shape[-1]), y[train].ravel()
+        known = np.isfinite(y_train)
+        x_val, y_val = x[val].reshape(-1, x.shape[-1]), np.nan_to_num(y[val]).ravel()
+        return (
+            loader(x_train[known], y_train[known], True),
+            loader(x_val, y_val, False),
+            y_scale,
+        )

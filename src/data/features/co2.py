@@ -1,7 +1,7 @@
 """Training table for the CO2 models, one row per (issue day, hour 0-167).
 
-Target y = CO2 factor at the valid hour minus the factor at the last hour before issue, in
-g/kWh. Inputs: LightGBM renewables forecasts (data/derived/forecasts/<task>_lgbm_<period>.parquet),
+Targets in g/kWh: y = CO2 factor at the valid hour minus the factor at the last hour before
+issue (days 1-2), y_far = the factor minus its 28-day profile at that hour (days 3-7). Inputs: LightGBM renewables forecasts (data/derived/forecasts/<task>_lgbm_<period>.parquet),
 GEFS and ECMWF weather from the renewables tables, GEFS wind over Germany and Belgium,
 ENTSO-E day-ahead values for the hours of the issue's local day, outages announced before
 issue, and every measured series up to the last hour before issue. y_ref is the TimesFM-3
@@ -175,6 +175,17 @@ def build() -> pd.DataFrame:
     df["co2_prior"] = df.intensity_m168 * (1 - df.ren_share_f.clip(0, 1))
 
     valid_local = df.valid_time.dt.tz_convert(LOCAL_TZ)
+    # forecast errors in timing grow with lead: means around the hour and over its day
+    day = valid_local.dt.date
+    for c in ["ren_f", "ren_share_f"]:
+        for half in (3, 12):
+            df[f"{c}_w{half}"] = df.groupby("issue_time")[c].transform(
+                lambda x, n=2 * half + 1: x.rolling(
+                    n, center=True, min_periods=1
+                ).mean()
+            )
+        df[f"{c}_day"] = df.groupby(["issue_time", day])[c].transform("mean")
+
     df["hour"] = df.valid_time.dt.hour
     df["dow"] = valid_local.dt.day_of_week
     df["month"] = valid_local.dt.month
@@ -215,21 +226,21 @@ def build() -> pd.DataFrame:
     issues = pd.DatetimeIndex(df.issue_time.unique())
     df = pd.concat([df, announced_outages(issues)], axis=1)
 
-    ref = pd.read_csv(
-        DERIVED / "forecasts" / "timesfm3.csv", parse_dates=["issue_time"]
-    )
-    ref = ref.rename(columns={"y_hat": "y_ref"})[["issue_time", "h", "y_ref"]]
+    ref = pd.read_parquet(
+        DERIVED / "references" / "co2.parquet", columns=["issue_time", "h", "timesfm3"]
+    ).rename(columns={"timesfm3": "y_ref"})
     df = df.merge(ref, on=["issue_time", "h"], how="left")
 
     df["co2"] = m.co2.reindex(df.valid_time).to_numpy()
     df["y"] = df.co2 - df.co2_last
+    df["y_far"] = df.co2 - df.co2_prof
     return df
 
 
 def main() -> None:
     df = build()
     out = DERIVED / "co2_dataset.parquet"
-    df.to_parquet(out, index=False)
+    df.to_parquet(out, index=False, compression="zstd")
     print(
         f"{out}: {len(df)} rows, {df.shape[1]} columns, issues "
         f"{df.issue_time.min():%Y-%m-%d} .. {df.issue_time.max():%Y-%m-%d}; "

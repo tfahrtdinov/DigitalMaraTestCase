@@ -12,7 +12,7 @@ from numpy.typing import NDArray
 from data.loader import DERIVED, gefs, gefs_stores
 
 CACHE = DERIVED / "gefs_3h"
-# de_* and be_* lie outside the Dutch box: approximate centres of wind regions,
+# de_* and be_* lie outside the Netherlands box: approximate centres of wind regions,
 # read from the wider store (box="wind")
 POINTS: dict[str, dict[str, tuple[float, float]]] = {
     "de_offshore": {
@@ -138,7 +138,7 @@ def to_hours(table: pd.DataFrame, column: str, n_hours: int) -> NDArray[np.float
 
 
 def gefs_neighbor_wind(groups: list[str], n_hours: int = 168) -> pd.DataFrame:
-    """Wind speed mean and spread over the members for point groups outside the Dutch box,
+    """Wind speed mean and spread over the members for point groups outside the Netherlands box,
     per (issue at 06 UTC of the run's day, hour), interpolated to hour centres. The 3 h table
     is cached in data/derived/gefs_neighbors_3h.parquet."""
     cached = DERIVED / "gefs_neighbors_3h.parquet"

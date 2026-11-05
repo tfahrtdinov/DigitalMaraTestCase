@@ -1,6 +1,9 @@
-"""CO2 factor task. Target y = change from the last hour before issue, see
-data/features/co2.py; metrics are computed on the factor in g/kWh, the reference forecast
-is TimesFM-3."""
+"""CO2 factor tasks, see data/features/co2.py. Days 1-2: target is the change from the last
+hour before issue, all inputs. Days 3-7: target is the deviation from the 28-day profile,
+without the state at issue and the day-ahead values, with smoothed renewables forecasts.
+Metrics are computed on the factor in g/kWh, the reference forecast is TimesFM-3."""
+
+from collections.abc import Callable
 
 import numpy as np
 import pandas as pd
@@ -56,24 +59,51 @@ OUTAGES = [
 FEATURES = [*FORECAST, *HISTORY, *CALENDAR, *DAY_AHEAD, *WEATHER_COLUMNS, *OUTAGES]
 
 
-def scoring_table(df: pd.DataFrame, y_hat: NDArray[np.float64]) -> pd.DataFrame:
-    """Adds the last known factor back to the predicted change."""
-    return pd.DataFrame(
-        {
-            "issue_time": df["issue_time"].to_numpy(),
-            "h": df["h"].to_numpy(),
-            "y": df["co2"].to_numpy(),
-            "y_hat": np.clip(df["co2_last"].to_numpy() + y_hat, 0, None),
-            "y_naive": df["y_ref"].to_numpy(),
-        }
-    )
+FAR_FEATURES = [
+    "solar_f",
+    "onshore_f",
+    "onshore_f_next",
+    "offshore_f",
+    "ren_f",
+    "ren_share_f",
+    "ren_dev_f",
+    *(f"{c}_{w}" for c in ("ren_f", "ren_share_f") for w in ("w3", "w12", "day")),
+    *WEATHER_COLUMNS,
+    "co2_m168",
+    "co2_prof",
+    "intensity_m168",
+    "co2_prior",
+    "gas_m168",
+    "gas_prof",
+    "coal_m168",
+    "coal_prof",
+    "total_prof",
+    "load_prof",
+    *OUTAGES,
+    *CALENDAR,
+]
 
 
-CO2 = Task(
-    "co2",
-    FEATURES,
-    "y",
-    scoring_table,
-    lambda: pd.read_parquet(DERIVED / "co2_dataset.parquet"),
-    lgbm_space,
-)
+def scoring(base: str) -> Callable[[pd.DataFrame, NDArray[np.float64]], pd.DataFrame]:
+    """Adds the column `base` back to the predicted target."""
+
+    def table(df: pd.DataFrame, y_hat: NDArray[np.float64]) -> pd.DataFrame:
+        return pd.DataFrame(
+            {
+                "issue_time": df["issue_time"].to_numpy(),
+                "h": df["h"].to_numpy(),
+                "y": df["co2"].to_numpy(),
+                "y_hat": np.clip(df[base].to_numpy() + y_hat, 0, None),
+                "y_naive": df["y_ref"].to_numpy(),
+            }
+        )
+
+    return table
+
+
+def load() -> pd.DataFrame:
+    return pd.read_parquet(DERIVED / "co2_dataset.parquet")
+
+
+CO2 = Task("co2", FEATURES, "y", scoring("co2_last"), load, lgbm_space)
+CO2_FAR = Task("co2_far", FAR_FEATURES, "y_far", scoring("co2_prof"), load, lgbm_space)
