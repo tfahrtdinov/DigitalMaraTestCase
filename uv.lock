@@ -580,14 +580,19 @@ dependencies = [
     { name = "optuna" },
     { name = "pandas" },
     { name = "pystac" },
+    { name = "python-dotenv" },
     { name = "requests" },
     { name = "scikit-learn" },
     { name = "scipy" },
     { name = "statsforecast" },
     { name = "statsmodels" },
-    { name = "torch" },
     { name = "xarray" },
     { name = "zarr" },
+]
+
+[package.optional-dependencies]
+neural = [
+    { name = "torch" },
 ]
 
 [package.dev-dependencies]
@@ -613,15 +618,17 @@ requires-dist = [
     { name = "optuna", specifier = ">=5.0.0" },
     { name = "pandas", specifier = ">=3.1.0" },
     { name = "pystac", specifier = ">=1.15.2" },
+    { name = "python-dotenv", specifier = ">=1.2.4" },
     { name = "requests", specifier = ">=2.34.2" },
     { name = "scikit-learn", specifier = ">=1.9.1" },
     { name = "scipy", specifier = ">=1.18.1" },
     { name = "statsforecast", specifier = ">=2.0.1" },
     { name = "statsmodels", specifier = ">=0.15.0" },
-    { name = "torch", specifier = ">=2.15.0" },
+    { name = "torch", marker = "extra == 'neural'", specifier = ">=2.15.0" },
     { name = "xarray", specifier = ">=2026.9.0" },
     { name = "zarr", specifier = ">=3.4.2" },
 ]
+provides-extras = ["neural"]
 
 [package.metadata.requires-dev]
 dev = [

@@ -1,4 +1,6 @@
-"""PYTHONPATH=src uv run python -m lgbm.run_hpo solar --trials 30 [--mlflow]"""
+"""PYTHONPATH=src uv run python -m lgbm.run_hpo solar --trials 30 [--console]
+
+Metrics go to MLflow (experiment "hpo") unless --console is given."""
 
 import argparse
 import json
@@ -22,13 +24,13 @@ def main() -> None:
     p.add_argument("--val-start", default="2024-01-01")
     p.add_argument("--holdout-start", default="2025-01-01")
     p.add_argument("--end", default="2026-01-01")
-    p.add_argument("--mlflow", action="store_true")
+    p.add_argument("--console", action="store_true", help="print instead of MLflow")
     a = p.parse_args()
 
     task = TASKS[a.task]
     folds = Periods(a.val_start, a.holdout_start, a.end).validation_folds(a.splits)
     name = f"{task.name}_lgbm"
-    logger = MLflowLogger("hpo", name) if a.mlflow else ConsoleLogger(name)
+    logger = ConsoleLogger(name) if a.console else MLflowLogger("hpo", name)
     optuna.logging.set_verbosity(optuna.logging.WARNING)
     with logger:
         study = hpo.tune(task, task.load(), folds, a.trials, logger)

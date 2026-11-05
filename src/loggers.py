@@ -1,6 +1,9 @@
 """Where parameters and metrics go: the console or an MLflow run. Both are context managers."""
 
+import os
 from typing import Protocol
+
+from dotenv import load_dotenv
 
 
 class Logger(Protocol):
@@ -35,14 +38,17 @@ class ConsoleLogger:
 
 
 class MLflowLogger:
-    """One MLflow run per `with` block; `tracking_uri` None uses the MLflow default."""
+    """One MLflow run per `with` block. `tracking_uri` None takes MLFLOW_TRACKING_URI
+    from the environment or .env; unset, MLflow writes to ./mlruns."""
 
     def __init__(self, experiment: str, run_name: str, tracking_uri: str | None = None):
         import mlflow
 
+        load_dotenv()
         self.mlflow = mlflow
-        if tracking_uri:
-            mlflow.set_tracking_uri(tracking_uri)
+        uri = tracking_uri or os.environ.get("MLFLOW_TRACKING_URI")
+        if uri:
+            mlflow.set_tracking_uri(uri)
         mlflow.set_experiment(experiment)
         self.run_name = run_name
 

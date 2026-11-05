@@ -1,13 +1,6 @@
-from .config import LGBMConfig, ModelConfig, TorchConfig
-from .nets import NETS
-from .neural import MODELS, NeuralModel, RegressionModel
+"""Model configurations. The torch-based parts live in `models.nets` and `models.neural`
+and are imported from there, so this package loads without torch installed."""
 
-__all__ = [
-    "LGBMConfig",
-    "ModelConfig",
-    "TorchConfig",
-    "NETS",
-    "MODELS",
-    "NeuralModel",
-    "RegressionModel",
-]
+from .config import LGBMConfig, ModelConfig, TorchConfig
+
+__all__ = ["LGBMConfig", "ModelConfig", "TorchConfig"]

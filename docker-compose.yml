@@ -1,0 +1,33 @@
+# MLflow tracking server plus a training image built from uv.lock.
+#   docker compose up -d                                   -> MLflow UI at http://localhost:5001
+#   docker compose run --rm train lgbm.run_hpo solar       -> HPO inside the container,
+#   docker compose run --rm train lgbm.run_holdout solar      metrics to the same MLflow
+# Local runs (uv run ...) log to MLFLOW_TRACKING_URI from .env; see .env.example.
+services:
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v3.18.0
+    ports:
+      - "5001:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    command: >
+      mlflow server
+      --host 0.0.0.0 --port 5000
+      --backend-store-uri sqlite:////mlflow/mlflow.db
+      --artifacts-destination /mlflow/artifacts
+      --serve-artifacts
+      --allowed-hosts localhost:5001,127.0.0.1:5001,mlflow:5000
+    restart: unless-stopped
+
+  train:
+    build: .
+    profiles: [train]
+    depends_on: [mlflow]
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    volumes:
+      - ./data:/app/data
+      - ./configs:/app/configs
+
+volumes:
+  mlflow-data:
