@@ -37,7 +37,7 @@ class Task:
 def lgbm_space(trial: optuna.trial.BaseTrial) -> LGBMConfig:
     """LightGBM search space shared by the renewables tasks."""
     return LGBMConfig(
-        n_estimators=trial.suggest_int("n_estimators", 200, 1500, step=100),
+        n_estimators=trial.suggest_int("n_estimators", 100, 500, step=100),
         learning_rate=trial.suggest_float("learning_rate", 0.01, 0.1, log=True),
         num_leaves=trial.suggest_int("num_leaves", 15, 127, log=True),
         min_child_samples=trial.suggest_int("min_child_samples", 20, 300, log=True),

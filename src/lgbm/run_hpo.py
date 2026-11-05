@@ -1,4 +1,4 @@
-"""PYTHONPATH=src uv run python -m lgbm.run_hpo solar --trials 30 [--hours 0 48] [--console]
+"""PYTHONPATH=src uv run python -m lgbm.run_hpo solar --trials 20 [--hours 0 48] [--console]
 
 --hours START END restricts the model to forecast hours [START, END); the config file name
 carries the range. Metrics go to MLflow (experiment "hpo") unless --console is given."""
@@ -20,7 +20,7 @@ ROOT_CONFIGS = "configs"
 def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("task", choices=TASKS)
-    p.add_argument("--trials", type=int, default=30)
+    p.add_argument("--trials", type=int, default=20)
     p.add_argument("--splits", type=int, default=6)
     p.add_argument("--val-start", default="2024-01-01")
     p.add_argument("--holdout-start", default="2025-01-01")
