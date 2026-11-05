@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 760" width="1100" height="760" role="img" aria-label="One model run: data is split by time, LightGBM or a neural model is trained, a 168-hour forecast is scored, and settings, losses and scores are written through the Logger protocol to the console or MLflow." font-family="-apple-system, 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif">
+<defs><marker id="a1c2430" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#1c2430"/></marker><marker id="a2a78d6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#2a78d6"/></marker><marker id="a7a4fd0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#7a4fd0"/></marker><marker id="a8792a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#8792a2"/></marker><marker id="ad9622b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" markerUnits="userSpaceOnUse" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#d9622b"/></marker></defs>
+<rect width="1100" height="760" rx="16" fill="#ffffff"/>
+<rect x="20" y="50" width="215" height="250" rx="9" fill="#ffffff" stroke="#8792a2" stroke-width="1.6"/>
+<text x="127" y="82" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Split by time</text>
+<text x="127" y="102" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">each fold trains on all the past</text>
+<rect x="38" y="125" width="62" height="16" rx="2" fill="#8792a2"/>
+<rect x="108" y="125" width="40" height="16" rx="2" fill="#1c2430"/>
+<rect x="38" y="155" width="96" height="16" rx="2" fill="#8792a2"/>
+<rect x="142" y="155" width="40" height="16" rx="2" fill="#1c2430"/>
+<rect x="38" y="185" width="130" height="16" rx="2" fill="#8792a2"/>
+<rect x="176" y="185" width="40" height="16" rx="2" fill="#1c2430"/>
+<rect x="38" y="228" width="12" height="12" rx="2" fill="#8792a2"/>
+<text x="56" y="239" font-size="12" fill="#5b6675" font-weight="400" text-anchor="start">training</text>
+<rect x="122" y="228" width="12" height="12" rx="2" fill="#1c2430"/>
+<text x="140" y="239" font-size="12" fill="#5b6675" font-weight="400" text-anchor="start">test</text>
+<text x="38" y="268" font-size="12" fill="#5b6675" font-weight="400" text-anchor="start">7-day gap before each test</text>
+<rect x="262" y="22" width="540" height="138" rx="14" fill="#eef5fd"/>
+<text x="280" y="48" font-size="12" fill="#2a78d6" font-weight="700" text-anchor="start" letter-spacing="0.8">LIGHTGBM</text>
+<path d="M235 105 L290 105" fill="none" stroke="#2a78d6" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#a2a78d6)"/>
+<rect x="290" y="62" width="220" height="86" rx="9" fill="#ffffff" stroke="#2a78d6" stroke-width="1.6"/>
+<text x="400.0" y="102.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Table</text>
+<text x="400.0" y="122.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">one row per issue and hour</text>
+<path d="M510 105 L560 105" fill="none" stroke="#2a78d6" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#a2a78d6)"/>
+<rect x="560" y="62" width="220" height="86" rx="9" fill="#ffffff" stroke="#2a78d6" stroke-width="1.6"/>
+<text x="670.0" y="102.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Fit trees</text>
+<text x="670.0" y="122.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">settings tuned with Optuna</text>
+<rect x="262" y="172" width="540" height="268" rx="14" fill="#fdf3ed"/>
+<text x="280" y="198" font-size="12" fill="#d9622b" font-weight="700" text-anchor="start" letter-spacing="0.8">NEURAL NETWORK</text>
+<path d="M235 254 L290 254" fill="none" stroke="#d9622b" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#ad9622b)"/>
+<rect x="290" y="212" width="220" height="84" rx="9" fill="#ffffff" stroke="#d9622b" stroke-width="1.6"/>
+<text x="400.0" y="242.5" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Arrays</text>
+<text x="400.0" y="262.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">past 336 h, next 168 h</text>
+<text x="400.0" y="279.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">scaled on each fold</text>
+<path d="M510 254 L560 254" fill="none" stroke="#d9622b" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#ad9622b)"/>
+<rect x="560" y="212" width="220" height="84" rx="9" fill="#ffffff" stroke="#d9622b" stroke-width="1.6"/>
+<text x="670.0" y="251.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Training loop</text>
+<text x="670.0" y="271.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">fixed number of epochs</text>
+<path d="M670 296 L670 326" fill="none" stroke="#d9622b" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#ad9622b)"/>
+<text x="680" y="316" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="start">asks the model</text>
+<rect x="560" y="336" width="220" height="88" rx="9" fill="#f5f1fd" stroke="#7a4fd0" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="670.0" y="368.5" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">NeuralModel</text>
+<text x="670.0" y="388.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">must give: loss, prediction,</text>
+<text x="670.0" y="405.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">optimiser</text>
+<rect x="630.0" y="326" width="80" height="20" rx="10" fill="#7a4fd0"/>
+<text x="670.0" y="340" font-size="10.5" fill="#ffffff" font-weight="700" text-anchor="middle" letter-spacing="0.8">PROTOCOL</text>
+<rect x="290" y="348" width="220" height="64" rx="9" fill="#ffffff" stroke="#d9622b" stroke-width="1.6"/>
+<text x="400.0" y="377.0" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">LSTM</text>
+<text x="400.0" y="397.0" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">reads whole windows</text>
+<path d="M510 380 L560 380" fill="none" stroke="#7a4fd0" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="6 4" marker-end="url(#a7a4fd0)"/>
+<path d="M780 105 L830 105" fill="none" stroke="#2a78d6" stroke-width="2" stroke-linejoin="round" marker-end="url(#a2a78d6)"/>
+<path d="M780 254 L805 254 L805 145 L830 145" fill="none" stroke="#d9622b" stroke-width="2" stroke-linejoin="round" marker-end="url(#ad9622b)"/>
+<rect x="830" y="62" width="250" height="110" rx="9" fill="#1c2430" stroke="#1c2430" stroke-width="1.6"/>
+<text x="955.0" y="105.5" font-size="15" fill="#ffffff" font-weight="650" text-anchor="middle">168-hour forecast</text>
+<text x="955.0" y="125.5" font-size="12.5" fill="#c9d1db" font-weight="400" text-anchor="middle">same table from both branches</text>
+<text x="955.0" y="142.5" font-size="12.5" fill="#c9d1db" font-weight="400" text-anchor="middle">actual, forecast, reference</text>
+<path d="M955 172 L955 232" fill="none" stroke="#1c2430" stroke-width="1.6" stroke-linejoin="round" marker-end="url(#a1c2430)"/>
+<rect x="830" y="232" width="250" height="92" rx="9" fill="#ffffff" stroke="#1c2430" stroke-width="1.6"/>
+<text x="955.0" y="266.5" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Score</text>
+<text x="955.0" y="286.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">MAE overall and per day</text>
+<text x="955.0" y="303.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">improvement over the reference</text>
+<rect x="20" y="462" width="1060" height="278" rx="14" fill="#f4f5f7"/>
+<text x="38" y="488" font-size="12" fill="#5b6675" font-weight="700" text-anchor="start" letter-spacing="0.8">WRITTEN DURING THE RUN</text>
+<path d="M127 300 L127 460" fill="none" stroke="#7a4fd0" stroke-width="2" stroke-linejoin="round" marker-end="url(#a7a4fd0)"/>
+<text x="137" y="395" font-size="12.5" fill="#7a4fd0" font-weight="600" text-anchor="start">settings</text>
+<path d="M780 280 L815 280 L815 460" fill="none" stroke="#7a4fd0" stroke-width="2" stroke-linejoin="round" marker-end="url(#a7a4fd0)"/>
+<text x="825" y="395" font-size="12.5" fill="#7a4fd0" font-weight="600" text-anchor="start">losses, every epoch</text>
+<path d="M1010 324 L1010 460" fill="none" stroke="#7a4fd0" stroke-width="2" stroke-linejoin="round" marker-end="url(#a7a4fd0)"/>
+<text x="1020" y="395" font-size="12.5" fill="#7a4fd0" font-weight="600" text-anchor="start">scores</text>
+<rect x="40" y="502" width="500" height="46" rx="8" fill="#ffffff" stroke="#d8dde3"/>
+<text x="70" y="530" font-size="13.5" fill="#1c2430" font-weight="650" text-anchor="start">Run start</text>
+<text x="205" y="530" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="start">settings: model config, hours, seeds</text>
+<rect x="40" y="556" width="500" height="46" rx="8" fill="#ffffff" stroke="#d8dde3"/>
+<circle cx="58" cy="579" r="5" fill="#2a78d6"/>
+<text x="70" y="584" font-size="13.5" fill="#1c2430" font-weight="650" text-anchor="start">Every tuning trial</text>
+<text x="205" y="584" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="start">settings and scores per fold</text>
+<rect x="40" y="610" width="500" height="46" rx="8" fill="#ffffff" stroke="#d8dde3"/>
+<circle cx="58" cy="633" r="5" fill="#d9622b"/>
+<text x="70" y="638" font-size="13.5" fill="#1c2430" font-weight="650" text-anchor="start">Every epoch</text>
+<text x="205" y="638" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="start">training loss and validation loss</text>
+<rect x="40" y="664" width="500" height="46" rx="8" fill="#ffffff" stroke="#d8dde3"/>
+<text x="70" y="692" font-size="13.5" fill="#1c2430" font-weight="650" text-anchor="start">After scoring</text>
+<text x="205" y="692" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="start">MAE, RMSE, bias, improvement, MAE per day</text>
+<path d="M540 615 L610 615" fill="none" stroke="#7a4fd0" stroke-width="2" stroke-linejoin="round" marker-end="url(#a7a4fd0)"/>
+<rect x="610" y="560" width="190" height="110" rx="9" fill="#f5f1fd" stroke="#7a4fd0" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="705.0" y="603.5" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Logger</text>
+<text x="705.0" y="623.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">must give: log settings,</text>
+<text x="705.0" y="640.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">log metrics, open a sub-run</text>
+<rect x="665.0" y="550" width="80" height="20" rx="10" fill="#7a4fd0"/>
+<text x="705.0" y="564" font-size="10.5" fill="#ffffff" font-weight="700" text-anchor="middle" letter-spacing="0.8">PROTOCOL</text>
+<rect x="860" y="502" width="200" height="100" rx="9" fill="#ffffff" stroke="#1c2430" stroke-width="1.6"/>
+<text x="960.0" y="540.5" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">Console</text>
+<text x="960.0" y="560.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">prints each line live</text>
+<text x="960.0" y="577.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">with the --console flag</text>
+<rect x="860" y="620" width="200" height="100" rx="9" fill="#ffffff" stroke="#1c2430" stroke-width="1.6"/>
+<text x="960.0" y="658.5" font-size="15" fill="#1c2430" font-weight="650" text-anchor="middle">MLflow</text>
+<text x="960.0" y="678.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">keeps runs and curves</text>
+<text x="960.0" y="695.5" font-size="12.5" fill="#5b6675" font-weight="400" text-anchor="middle">a sub-run per trial or seed</text>
+<path d="M860 552 L830 552 L830 600 L800 600" fill="none" stroke="#7a4fd0" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="6 4" marker-end="url(#a7a4fd0)"/>
+<path d="M860 670 L830 670 L830 630 L800 630" fill="none" stroke="#7a4fd0" stroke-width="1.6" stroke-linejoin="round" stroke-dasharray="6 4" marker-end="url(#a7a4fd0)"/>
+</svg>
