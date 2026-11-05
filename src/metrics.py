@@ -2,6 +2,8 @@
 168-hour window) and issue_time. Optional y_naive adds the improvement over a reference
 forecast: 1 - MAE / MAE_naive, in percent."""
 
+from typing import cast
+
 import numpy as np
 import pandas as pd
 from scipy.stats import spearmanr
@@ -26,7 +28,7 @@ def improvement(y: np.ndarray, y_hat: np.ndarray, y_naive: np.ndarray) -> float:
 def spearman_within_window(df: pd.DataFrame) -> float:
     """Rank correlation between y and y_hat inside each 168-hour window, averaged."""
     corr = [
-        spearmanr(w["y"].to_numpy(), w["y_hat"].to_numpy()).statistic
+        cast(float, spearmanr(w["y"].to_numpy(), w["y_hat"].to_numpy()).statistic)
         for _, w in df.groupby("issue_time")
     ]
     return float(np.mean(corr))

@@ -12,3 +12,5 @@ envs/
 final_report.md
 .pytest_cache/
 .ruff_cache/
+# local experiments with pretrained forecasters, not part of the deliverable
+experiments/

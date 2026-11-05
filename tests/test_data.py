@@ -1,14 +1,12 @@
 """Readers in src/data/loader.py against small synthetic files. `raw` points data.RAW at a temporary folder, so every test
 reads from disk: a changed file must change the result (no caching)."""
 
-import sys
 from pathlib import Path
 
 import pandas as pd
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
-import data.loader as data  # noqa: E402
+import data.loader as data
 
 
 def write_ned(
