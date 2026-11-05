@@ -11,8 +11,8 @@ A forecast is issued daily at 06:00 UTC for hours `h = 0…167`. Inputs must be 
 The feature tables and model configs are committed, so the models run without raw data. `make` lists all targets.
 
 ```bash
-make setup-neural        # folders, dependencies with torch (make setup: without torch)
-make mlflow              # results at http://localhost:5001, with or without Docker
+uv sync --extra neural   # dependencies with torch (uv sync: without torch)
+make mlflow              # MLflow in Docker at http://localhost:5001; without it, runs go to mlruns/
 make forecasts           # production models, 2025
 make co2-forecast        # CO₂ LightGBM for days 1–2 and days 3–7
 make co2-lstm            # LSTM, DEVICE=cuda for a GPU
@@ -25,7 +25,7 @@ make co2-lstm            # LSTM, DEVICE=cuda for a GPU
 I trained the LSTM and tuned the days 3–7 LightGBM on Kaggle, with its GPU and package versions (torch 2.11, LightGBM 4.6, pandas 2.3). The image uses the versions in `uv.lock` (torch 2.15, LightGBM 4.7, pandas 3.1), so training in Docker may not match my results exactly. To train in Docker:
 
 ```bash
-make dirs mlflow
+make mlflow
 make image                    # LightGBM image, and the LSTM image with torch
 make forecasts co2-forecast DOCKER=1
 make co2-lstm DOCKER=1

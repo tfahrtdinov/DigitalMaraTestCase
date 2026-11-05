@@ -24,38 +24,18 @@ RUN_NEURAL := $(LOCAL)
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: help dirs setup setup-neural image mlflow test lint \
+.PHONY: help image mlflow \
 	tables hpo forecasts inputs renewables \
 	co2-tables co2-hpo co2-forecast co2 co2-lstm
 
 help: ## List the targets
 	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk -F ':.*## ' '{printf "  %-14s %s\n", $$1, $$2}'
 
-dirs: ## Create the output folder
-	@mkdir -p data/derived/forecasts
-
-setup: dirs ## Install dependencies without torch (removes an installed torch)
-	uv sync
-
-setup-neural: dirs ## Install dependencies with torch
-	uv sync --extra neural
-
 image: ## Build the LightGBM and the LSTM (torch) images; repeat after changing src/
 	docker compose build train train-neural
 
-mlflow: ## Start MLflow at http://localhost:5001, with or without Docker
-	@if docker info >/dev/null 2>&1; then \
-		docker compose up -d mlflow; \
-	else \
-		nohup uv run mlflow ui --port 5001 --backend-store-uri sqlite:///mlflow.db >/dev/null 2>&1 & \
-	fi
-
-test: ## Run the tests
-	uv run pytest
-
-lint: ## Check style without changing files
-	uv run ruff check src tests
-	uv run black --check src tests
+mlflow: ## Start MLflow at http://localhost:5001
+	docker compose up -d mlflow
 
 tables: ## Build the production tables
 	$(RUN) data.features.solar

@@ -58,6 +58,7 @@ def main() -> None:
             for fold in folds(a.start, a.end, a.splits)
         ]
     table = pd.concat(tables).sort_values(["issue_time", "h"])
+    (DERIVED / "forecasts").mkdir(parents=True, exist_ok=True)
     table.to_parquet(DERIVED / "forecasts" / f"{name}.parquet", index=False)
     logger = ConsoleLogger(name) if a.console else MLflowLogger("holdout", name)
     with logger:
