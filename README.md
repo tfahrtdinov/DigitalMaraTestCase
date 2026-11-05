@@ -45,8 +45,10 @@ Rebuild the images after changing `src/`. Exit code 137 means the container ran 
 | `co2_far_lgbm_h48-168.txt` | CO₂, days 3–7, LightGBM |
 | `solar_lgbm.txt`, `onshore_lgbm.txt`, `offshore_lgbm.txt` | production inputs of the CO₂ models |
 
+Run with `PYTHONPATH=src OMP_NUM_THREADS=1`: on macOS, torch and LightGBM in one process otherwise crash with a segmentation fault.
+
 ```python
-# PYTHONPATH=src; the last issue in the tables, days 1–2
+# the last issue in the tables, days 1–2
 from pathlib import Path
 import lightgbm as lgb
 from data.features.sequences import Sequences
