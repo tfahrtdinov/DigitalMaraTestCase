@@ -10,10 +10,15 @@ import optuna
 
 from lgbm import hpo
 from loggers import ConsoleLogger, MLflowLogger
-from tasks import solar, wind
+from tasks import co2, solar, wind
 from validation import Periods
 
-TASKS = {"solar": solar.SOLAR, "onshore": wind.ONSHORE, "offshore": wind.OFFSHORE}
+TASKS = {
+    "solar": solar.SOLAR,
+    "onshore": wind.ONSHORE,
+    "offshore": wind.OFFSHORE,
+    "co2": co2.CO2,
+}
 ROOT_CONFIGS = "configs"
 
 
