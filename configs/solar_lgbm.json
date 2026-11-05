@@ -1,0 +1,11 @@
+{
+  "seed": 0,
+  "objective": "l1",
+  "n_estimators": 500,
+  "learning_rate": 0.04975100756745756,
+  "num_leaves": 18,
+  "min_child_samples": 55,
+  "subsample": 0.8,
+  "colsample_bytree": 0.7093314500222997,
+  "reg_lambda": 0.2600734115460517
+}
