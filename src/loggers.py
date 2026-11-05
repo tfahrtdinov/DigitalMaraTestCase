@@ -2,9 +2,26 @@
 `child(name)` gives a nested logger for a sub-run such as one HPO trial."""
 
 import os
+from functools import cache
 from typing import Protocol
 
-from dotenv import load_dotenv
+import requests
+
+LOCAL_SERVER = "http://localhost:5001"
+LOCAL_STORE = "sqlite:///mlflow.db"
+
+
+@cache
+def tracking_uri() -> str:
+    """MLFLOW_TRACKING_URI, by default the server from docker-compose.yml, if that server
+    answers; otherwise a local store in the working directory."""
+    uri = os.environ.get("MLFLOW_TRACKING_URI", LOCAL_SERVER)
+    try:
+        requests.get(f"{uri}/health", timeout=2).raise_for_status()
+    except requests.RequestException:
+        print(f"MLflow server {uri} does not answer, using {LOCAL_STORE}")
+        return LOCAL_STORE
+    return uri
 
 
 class Logger(Protocol):
@@ -44,23 +61,13 @@ class ConsoleLogger:
 
 
 class MLflowLogger:
-    """One MLflow run per `with` block. `tracking_uri` None takes MLFLOW_TRACKING_URI
-    from the environment or .env; unset, MLflow writes to ./mlruns."""
+    """One MLflow run per `with` block, stored at `tracking_uri()`."""
 
-    def __init__(
-        self,
-        experiment: str,
-        run_name: str,
-        tracking_uri: str | None = None,
-        nested: bool = False,
-    ):
+    def __init__(self, experiment: str, run_name: str, nested: bool = False):
         import mlflow
 
-        load_dotenv()
         self.mlflow = mlflow
-        uri = tracking_uri or os.environ.get("MLFLOW_TRACKING_URI")
-        if uri:
-            mlflow.set_tracking_uri(uri)
+        mlflow.set_tracking_uri(tracking_uri())
         mlflow.set_experiment(experiment)
         self.experiment, self.run_name, self.nested = experiment, run_name, nested
 
