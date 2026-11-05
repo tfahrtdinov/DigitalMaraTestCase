@@ -17,8 +17,6 @@ CLAUDE.md
 outdated/
 # local environments of foundation-model experiments (3 GB)
 envs/
-# working draft; remove this line when the report is final
-final_report.md
 .pytest_cache/
 .ruff_cache/
 # local experiments with pretrained forecasters, not part of the deliverable
