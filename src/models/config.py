@@ -34,3 +34,5 @@ class TorchConfig(ModelConfig):
     epochs: int = 30
     batch_size: int = 1024
     threads: int = 1
+    grad_clip: float | None = None
+    one_cycle: bool = False
