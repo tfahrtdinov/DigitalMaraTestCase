@@ -1,5 +1,6 @@
-"""Optuna search over LightGBM configs. Every trial scores each validation fold, logs all
-metrics averaged over the folds, and is optimised on the mean MAE."""
+"""Optuna search over LightGBM configs. Every trial is a child run of the logger: its
+config and per-fold metrics go there, the fold means also go to the study run with the
+trial number as step. The study is optimised on the mean MAE."""
 
 from typing import cast
 
@@ -32,11 +33,12 @@ def tune(
     def objective(trial: optuna.Trial) -> float:
         config = task.space(trial)
         assert isinstance(config, LGBMConfig)
-        logger.log_params(config.to_dict() | {"trial": trial.number})
-
-        per_fold = [fold_scores(task, config, df, f, logger) for f in folds]
-        by_fold = pd.concat(per_fold, axis=1)  # metrics x folds
-        fold_metrics_mean = cast(dict[str, float], by_fold.mean(axis=1).to_dict())
+        with logger.child(f"trial_{trial.number}") as trial_logger:
+            trial_logger.log_params(config.to_dict())
+            per_fold = [fold_scores(task, config, df, f, trial_logger) for f in folds]
+            by_fold = pd.concat(per_fold, axis=1)  # metrics x folds
+            fold_metrics_mean = cast(dict[str, float], by_fold.mean(axis=1).to_dict())
+            trial_logger.log_metrics(fold_metrics_mean)
         logger.log_metrics(fold_metrics_mean, step=trial.number)
 
         trial.set_user_attr("metrics", fold_metrics_mean)
