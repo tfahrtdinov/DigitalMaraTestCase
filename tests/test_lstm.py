@@ -90,3 +90,34 @@ def test_table_loaders_keep_issue_and_hour_order_and_drop_unknown_targets():
     model = MODELS["regression"](net)
     Trainer(1).fit(model, train_loader, val_loader)
     assert Trainer.predict(model, val_loader).reshape(-1, 8).shape == (10, 8)
+
+
+def test_saved_checkpoints_reproduce_the_training_forecast(tmp_path):
+    from loggers import ConsoleLogger
+    from models import TorchConfig
+    from neural.predict import load, predict
+    from neural.run import forecast
+    from validation import Fold
+
+    data = sequences()
+    start = cast(pd.Timestamp, pd.Timestamp("2025-01-31", tz="UTC"))  # issue 31
+    end = cast(pd.Timestamp, start + pd.Timedelta(days=10))
+    fold = Fold(start, start, end)
+    config = TorchConfig(
+        net="lstm",
+        net_params={"hidden": 8, "layers": 1, "dropout": 0.0},
+        model="rnn",
+        epochs=1,
+        batch_size=8,
+    )
+    table = forecast(
+        config, data, fold, (0, 48), 2, "cpu", ConsoleLogger("t"), tmp_path / "m"
+    )
+    val = np.arange(len(data.y)) >= 30
+    co2 = predict(
+        load(sorted(tmp_path.glob("m_seed*.pt"))),
+        data.past[val],
+        data.future[val],
+        data.base[val][:, :48],
+    )
+    assert np.allclose(co2.ravel(), table.y_hat.to_numpy(), atol=1e-3)

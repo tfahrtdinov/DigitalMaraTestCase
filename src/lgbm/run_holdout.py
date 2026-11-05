@@ -5,11 +5,13 @@ Out-of-sample forecasts with the tuned LightGBM configs: [start, end) is cut int
 --splits equal folds, each forecast by a model refitted on everything before it minus the
 7-day gap; one model per hour segment of --hours (edges). The defaults are the 2025 holdout
 and write data/derived/forecasts/<task>_lgbm.parquet; another range gets the suffix
-_<start>_<end>. Metrics go to MLflow (experiment "holdout") unless --console is given.
+_<start>_<end>. --save writes the model of each segment; with several folds the last stays.
+Metrics go to MLflow (experiment "holdout") unless --console is given.
 """
 
 import argparse
 import json
+from pathlib import Path
 
 import pandas as pd
 
@@ -32,6 +34,7 @@ def main() -> None:
     p.add_argument("--start", default="2025-01-01")
     p.add_argument("--end", default="2026-01-01")
     p.add_argument("--splits", type=int, default=12)
+    p.add_argument("--save", type=Path, help="folder for the models")
     p.add_argument("--console", action="store_true", help="print instead of MLflow")
     a = p.parse_args()
 
@@ -48,8 +51,10 @@ def main() -> None:
         ) as f:
             config = LGBMConfig(**json.load(f))
         rows = df.loc[(df.h >= start) & (df.h < end)]
+        saved = config_name(task.name, start, end, full)
+        target = a.save / f"{saved}.txt" if a.save else None
         tables += [
-            forecast(task, config, rows, fold)
+            forecast(task, config, rows, fold, target)
             for fold in folds(a.start, a.end, a.splits)
         ]
     table = pd.concat(tables).sort_values(["issue_time", "h"])
@@ -62,9 +67,14 @@ def main() -> None:
         evaluate(table, logger)
 
 
-def forecast(task, config: LGBMConfig, df: pd.DataFrame, fold: Fold) -> pd.DataFrame:
+def forecast(
+    task, config: LGBMConfig, df: pd.DataFrame, fold: Fold, save: Path | None = None
+) -> pd.DataFrame:
     fit_rows, val_rows = task.train_rows(fold.train(df)), fold.val(df)
     booster = lgbm.fit(config, task.X(fit_rows), task.y(fit_rows))
+    if save is not None:
+        save.parent.mkdir(parents=True, exist_ok=True)
+        booster.booster_.save_model(save)
     return task.scoring_table(val_rows, lgbm.predict(booster, task.X(val_rows)))
 
 

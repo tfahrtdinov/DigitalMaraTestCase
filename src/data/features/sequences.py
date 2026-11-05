@@ -66,6 +66,15 @@ class Sequences:
 
         return loader(train, True), loader(val, False), y_scale
 
+    def scaling(self, train: NDArray[np.bool_]) -> dict[str, NDArray]:
+        """The statistics `loaders` standardises with, for inference after training."""
+        return {
+            "past_mean": np.nanmean(self.past[train], axis=(0, 1)),
+            "past_std": np.nanstd(self.past[train], axis=(0, 1)),
+            "future_mean": np.nanmean(self.future[train], axis=(0, 1)),
+            "future_std": np.nanstd(self.future[train], axis=(0, 1)),
+        }
+
     def table_loaders(
         self,
         train: NDArray[np.bool_],

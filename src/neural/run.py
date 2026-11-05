@@ -1,11 +1,13 @@
 """PYTHONPATH=src python -m neural.run configs/co2_lstm_h0-48.json --hours 0 48
     --start 2025-01-01 --end 2026-01-01 --splits 12 [--seeds 5] [--device cuda] [--console]
+    [--save models]
 
 Trains the neural model of the config (one row per issue and hour for an MLP, whole
 windows for an LSTM) on the expanding folds of [start, end), once per
 seed, and averages the seeds. Metrics per fold and overall go to MLflow (experiment
 "neural") unless --console is given; forecasts go to <out>/<config name>.parquet, with the suffix _<start>_<end> for any period
-other than the validation half-year."""
+other than the validation half-year. --save writes one checkpoint per seed of an LSTM, for
+neural.predict; with several folds the last one stays."""
 
 import argparse
 import json
@@ -32,6 +34,7 @@ def forecast(
     seeds: int,
     device: str,
     logger: Logger,
+    save: Path | None = None,
 ) -> pd.DataFrame:
     """Table of forecasts for the fold's issues: issue_time, h, y, y_hat, y_naive."""
     train = np.asarray(data.issue_time < fold.train_end)
@@ -62,6 +65,21 @@ def forecast(
                 config.grad_clip,
                 config.one_cycle,
             ).fit(model, train_loader, val_loader)
+        if save is not None:
+            save.parent.mkdir(parents=True, exist_ok=True)
+            torch.save(
+                {
+                    "net": config.net,
+                    "net_params": config.net_params,
+                    "sizes": sizes,
+                    "hours": hours,
+                    "state_dict": {k: v.cpu() for k, v in net.state_dict().items()},
+                    "y_scale": y_scale,
+                    "train_end": str(fold.train_end),
+                    **data.scaling(train),
+                },
+                f"{save}_seed{seed}.pt",
+            )
         predicted = Trainer.predict(model, val_loader)
         predictions.append(
             predicted.reshape(-1, len(h)) if tabular else predicted[:, h]
@@ -92,6 +110,7 @@ def main() -> None:
     p.add_argument("--device", default="cpu")
     p.add_argument("--data", default="data/derived/co2_sequences.npz")
     p.add_argument("--out", default="data/derived/forecasts")
+    p.add_argument("--save", type=Path, help="folder for the checkpoints")
     p.add_argument("--console", action="store_true", help="print instead of MLflow")
     a = p.parse_args()
 
@@ -107,7 +126,10 @@ def main() -> None:
     with logger:
         logger.log_params({**config.to_dict(), "hours": a.hours, "seeds": a.seeds})
         for fold in folds(a.start, a.end, a.splits):
-            table = forecast(config, data, fold, hours, a.seeds, a.device, logger)
+            target = a.save / Path(a.config).stem if a.save else None
+            table = forecast(
+                config, data, fold, hours, a.seeds, a.device, logger, target
+            )
             evaluate(table, logger, prefix=f"{fold.val_start:%Y-%m-%d}/")
             tables.append(table)
         result = pd.concat(tables)
