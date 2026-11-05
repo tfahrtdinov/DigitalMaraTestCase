@@ -16,6 +16,7 @@ import xarray as xr
 ROOT = Path(__file__).resolve().parents[2]
 RAW = ROOT / "data" / "raw"
 DERIVED = ROOT / "data" / "derived"
+DATES = "[0-9]*-[0-9]*-[0-9]*_[0-9]*-[0-9]*-[0-9]*"  # <start>_<end> suffix of every raw file
 
 
 def _concat_csv(pattern: str, **kwargs) -> pd.DataFrame:
@@ -28,7 +29,7 @@ def _concat_csv(pattern: str, **kwargs) -> pd.DataFrame:
 def ned(name: str, column: str = "volume") -> pd.Series:
     """Hourly NED series (measured, classification 2). `volume` is kWh per hour, `emissionfactor` kg CO2 / kWh.
     Files overlap at their edges; the later file wins (NED revises history)."""
-    df = _concat_csv(f"{name}_cls2_*.csv", usecols=["validfrom", column])
+    df = _concat_csv(f"{name}_cls2_{DATES}.csv", usecols=["validfrom", column])
     df["validfrom"] = pd.to_datetime(df["validfrom"], utc=True)
     df = (
         df.drop_duplicates("validfrom", keep="last").set_index("validfrom").sort_index()
@@ -38,7 +39,7 @@ def ned(name: str, column: str = "volume") -> pd.Series:
 
 def entsoe(name: str) -> pd.Series:
     """ENTSO-E series in MW (EUR/MWh for dayahead_price), 15-minute values averaged to hours."""
-    df = _concat_csv(f"entsoe_{name}_*.csv")
+    df = _concat_csv(f"entsoe_{name}_{DATES}.csv")
     df["time_utc"] = pd.to_datetime(df["time_utc"], utc=True)
     s = (
         df.drop_duplicates("time_utc", keep="last")
@@ -93,7 +94,7 @@ def outages() -> pd.DataFrame:
     """ENTSO-E A80 production unavailability: one row per announcement, revisions included (`mrid`, `revision`).
     Columns: unit_name, fuel, nominal_mw, available_mw, outage_start_utc, outage_end_utc, created_utc, doc_status
     (A05 active, A09 cancelled, A13 withdrawn)."""
-    df = _concat_csv("entsoe_outages_A80_*.csv")
+    df = _concat_csv(f"entsoe_outages_A80_{DATES}.csv")
     for c in [
         "created_utc",
         "outage_start_utc",

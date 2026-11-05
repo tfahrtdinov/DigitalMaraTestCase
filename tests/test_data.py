@@ -30,6 +30,18 @@ def raw(tmp_path, monkeypatch):
     return tmp_path
 
 
+def test_entsoe_name_does_not_match_longer_names(raw):
+    t = pd.date_range("2024-01-01", periods=4, freq="15min", tz="UTC")
+    pd.DataFrame({"time_utc": t, "value_mw": 1000.0}).to_csv(
+        raw / "entsoe_actual_wind_offshore_2024-01-01_2024-01-02.csv", index=False
+    )
+    pd.DataFrame({"time_utc": t, "value_mw": 10.0}).to_csv(
+        raw / "entsoe_actual_wind_offshore_consumption_2024-01-01_2024-01-02.csv",
+        index=False,
+    )
+    assert data.entsoe("actual_wind_offshore").tolist() == [1000.0]
+
+
 def test_ned_concatenates_and_later_file_wins(raw):
     write_ned(
         raw, "solar_cls2_2024-01-01_2024-01-01.csv", "2024-01-01", 4, [1, 2, 3, 4]
@@ -58,16 +70,16 @@ def test_ned_column_and_missing_pattern(raw):
 
 
 def test_reads_disk_every_call(raw):
-    write_ned(raw, "solar_cls2_a.csv", "2024-01-01", 2, [1, 2])
+    write_ned(raw, "solar_cls2_2024-01-01_2024-01-01.csv", "2024-01-01", 2, [1, 2])
     assert data.ned("solar").tolist() == [1, 2]
-    write_ned(raw, "solar_cls2_a.csv", "2024-01-01", 2, [7, 8])
+    write_ned(raw, "solar_cls2_2024-01-01_2024-01-01.csv", "2024-01-01", 2, [7, 8])
     assert data.ned("solar").tolist() == [7, 8]
 
 
 def test_entsoe_quarter_hours_are_averaged(raw):
     t = pd.date_range("2024-01-01", periods=8, freq="15min", tz="UTC")
     pd.DataFrame({"time_utc": t, "value_mw": [1, 2, 3, 4, 10, 10, 10, 10]}).to_csv(
-        raw / "entsoe_actual_solar_x.csv", index=False
+        raw / "entsoe_actual_solar_2024-01-01_2024-01-01.csv", index=False
     )
     s = data.entsoe("actual_solar")
     assert s.tolist() == [2.5, 10.0]
@@ -84,7 +96,7 @@ def test_openmeteo_long_table(raw):
             "lead": 1,
             "value": [0.0, 5.0],
         }
-    ).to_csv(raw / "openmeteo" / "solar_x.csv", index=False)
+    ).to_csv(raw / "openmeteo" / "solar_2024-04-01_2024-04-01.csv", index=False)
     df = data.openmeteo("solar")
     assert (
         list(df.columns) == ["time", "point", "lead", "value"]
@@ -114,7 +126,9 @@ def test_outages_dates_are_utc(raw):
         "unit_name": "Amer 9",
         "available_mw": 531.0,
     }
-    pd.DataFrame([row]).to_csv(raw / "entsoe_outages_A80_x.csv", index=False)
+    pd.DataFrame([row]).to_csv(
+        raw / "entsoe_outages_A80_2024-01-01_2024-01-01.csv", index=False
+    )
     df = data.outages()
     assert (
         all(str(df[c].dt.tz) == "UTC" for c in cols)
