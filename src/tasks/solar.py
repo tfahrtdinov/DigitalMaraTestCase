@@ -2,13 +2,11 @@
 data/solar_features.py; metrics are computed in kWh per hour."""
 
 import numpy as np
-import optuna
 import pandas as pd
 from numpy.typing import NDArray
 
 from data import DERIVED
-from models import LGBMConfig
-from tasks.task import Task
+from tasks.task import Task, lgbm_space
 
 FEATURES = ["k_gefs", "k_std_gefs", "k_ecmwf", "k_std_ecmwf", "h", "cs_ghi"]
 
@@ -29,23 +27,11 @@ def scoring_table(df: pd.DataFrame, y_hat: NDArray[np.float64]) -> pd.DataFrame:
     )
 
 
-def space(trial: optuna.trial.BaseTrial) -> LGBMConfig:
-    """LightGBM search space."""
-    return LGBMConfig(
-        n_estimators=trial.suggest_int("n_estimators", 200, 1500, step=100),
-        learning_rate=trial.suggest_float("learning_rate", 0.01, 0.1, log=True),
-        num_leaves=trial.suggest_int("num_leaves", 15, 127, log=True),
-        min_child_samples=trial.suggest_int("min_child_samples", 20, 300, log=True),
-        colsample_bytree=trial.suggest_float("colsample_bytree", 0.5, 1.0),
-        reg_lambda=trial.suggest_float("reg_lambda", 1e-3, 10, log=True),
-    )
-
-
 SOLAR = Task(
     "solar",
     FEATURES,
     "y",
     scoring_table,
     lambda: pd.read_parquet(DERIVED / "solar_dataset.parquet"),
-    space,
+    lgbm_space,
 )
