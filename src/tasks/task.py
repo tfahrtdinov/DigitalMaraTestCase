@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import numpy as np
 import optuna
 import pandas as pd
+from numpy.typing import NDArray
 
 from models import ModelConfig
 
@@ -19,7 +20,7 @@ class Task:
     target: str
     # (dataset rows, model output for them) -> table for metrics.summary:
     # issue_time, h, y (actual), y_hat, y_naive, all in physical units
-    scoring_table: Callable[[pd.DataFrame, np.ndarray], pd.DataFrame]
+    scoring_table: Callable[[pd.DataFrame, NDArray[np.float64]], pd.DataFrame]
     load: Callable[[], pd.DataFrame]
     space: Callable[[optuna.trial.BaseTrial], ModelConfig]
 

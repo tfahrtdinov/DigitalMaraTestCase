@@ -1,6 +1,7 @@
 import lightgbm as lgb
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 
 from models import LGBMConfig
 
@@ -14,6 +15,6 @@ def fit(config: LGBMConfig, X: pd.DataFrame, y: pd.Series) -> lgb.LGBMRegressor:
     return model.fit(X, y)
 
 
-def predict(model: lgb.LGBMRegressor, X: pd.DataFrame) -> np.ndarray:
+def predict(model: lgb.LGBMRegressor, X: pd.DataFrame) -> NDArray[np.float64]:
     """Predictions in the units of the training target, one per row of X."""
     return np.asarray(model.predict(X))

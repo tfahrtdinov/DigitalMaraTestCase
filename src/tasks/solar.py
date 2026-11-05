@@ -4,6 +4,7 @@ data/solar_features.py; metrics are computed in kWh per hour."""
 import numpy as np
 import optuna
 import pandas as pd
+from numpy.typing import NDArray
 
 from data import DERIVED
 from models import LGBMConfig
@@ -12,7 +13,7 @@ from tasks.task import Task
 FEATURES = ["k_gefs", "k_std_gefs", "k_ecmwf", "k_std_ecmwf", "h", "cs_ghi"]
 
 
-def scoring_table(df: pd.DataFrame, y_hat: np.ndarray) -> pd.DataFrame:
+def scoring_table(df: pd.DataFrame, y_hat: NDArray[np.float64]) -> pd.DataFrame:
     """Scales model output back to kWh per hour. Night rows (y undefined) get 0. The naive
     forecast is the GEFS clearness index applied directly, without a model."""
     scale = (df["eta"] * df["cs_ghi"]).to_numpy()

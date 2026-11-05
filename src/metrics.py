@@ -6,22 +6,25 @@ from typing import cast
 
 import numpy as np
 import pandas as pd
+from numpy.typing import NDArray
 from scipy.stats import spearmanr
 
 
-def mae(y: np.ndarray, y_hat: np.ndarray) -> float:
+def mae(y: NDArray[np.float64], y_hat: NDArray[np.float64]) -> float:
     return float(np.mean(np.abs(y_hat - y)))
 
 
-def rmse(y: np.ndarray, y_hat: np.ndarray) -> float:
+def rmse(y: NDArray[np.float64], y_hat: NDArray[np.float64]) -> float:
     return float(np.sqrt(np.mean((y_hat - y) ** 2)))
 
 
-def bias(y: np.ndarray, y_hat: np.ndarray) -> float:
+def bias(y: NDArray[np.float64], y_hat: NDArray[np.float64]) -> float:
     return float(np.mean(y_hat - y))
 
 
-def improvement(y: np.ndarray, y_hat: np.ndarray, y_naive: np.ndarray) -> float:
+def improvement(
+    y: NDArray[np.float64], y_hat: NDArray[np.float64], y_naive: NDArray[np.float64]
+) -> float:
     return float(100 * (1 - mae(y, y_hat) / mae(y, y_naive)))
 
 
