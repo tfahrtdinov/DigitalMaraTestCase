@@ -33,39 +33,6 @@ make co2-lstm DOCKER=1
 
 Rebuild the images after changing `src/`. Exit code 137 means the container ran out of memory; raise the limit in Docker Desktop.
 
-## Trained models
-
-`models/` holds the models of the last test fold: trained on issues up to 2026-08-20, they forecast 2026-08-28 – 2026-10-26 with the numbers in the report.
-
-| Files | Forecast |
-|---|---|
-| `co2_lstm_h0-48_seed{0,1,2}.pt` | CO₂, days 1–2, LSTM, mean over the seeds |
-| `co2_lstm_h48-168_seed{0,1,2}.pt` | CO₂, days 3–7, LSTM, mean over the seeds |
-| `co2_lgbm_h0-48.txt` | CO₂, days 1–2, LightGBM |
-| `co2_far_lgbm_h48-168.txt` | CO₂, days 3–7, LightGBM |
-| `solar_lgbm.txt`, `onshore_lgbm.txt`, `offshore_lgbm.txt` | production inputs of the CO₂ models |
-
-Run with `PYTHONPATH=src OMP_NUM_THREADS=1`: on macOS, torch and LightGBM in one process otherwise crash with a segmentation fault.
-
-```python
-# the last issue in the tables, days 1–2
-from pathlib import Path
-import lightgbm as lgb
-from data.features.sequences import Sequences
-from neural.predict import load, predict
-from tasks.co2 import CO2
-
-data = Sequences.load("data/derived/co2_sequences.npz")
-lstm = load(sorted(Path("models").glob("co2_lstm_h0-48_seed*.pt")))
-co2_lstm = predict(lstm, data.past[-1:], data.future[-1:], data.base[-1:, :48])
-
-rows = CO2.load().query("h < 48").tail(48)
-booster = lgb.Booster(model_file="models/co2_lgbm_h0-48.txt")
-co2_lgbm = rows["co2_last"] + booster.predict(CO2.X(rows))
-```
-
-Days 3–7 work the same way with `co2_far_sequences.npz`, `base[:, 48:168]` and `CO2_FAR`, whose base is `co2_prof`. Both results are in g CO₂/kWh.
-
 ## Models
 
 ![One model run: split by time, train, forecast, score, with what is written through the Logger protocol to the console or MLflow](docs/figures/models.svg)
@@ -116,12 +83,47 @@ forecast = CO2.scoring_table(test, lgbm.predict(model, CO2.X(test)))  # back to 
 print(summary(forecast))
 ```
 
-`lgbm.fit` passes the config to `lightgbm.LGBMRegressor`, with `seed` as `random_state` and `subsample_freq=1`. The same fit as a command, with the forecasts saved to `data/derived/forecasts/` and the model to `models/`:
+`lgbm.fit` passes the config to `lightgbm.LGBMRegressor`, with `seed` as `random_state` and `subsample_freq=1`. The same fit as a command, with the forecasts saved to `data/derived/forecasts/` and the model to `fitted/`:
 
 ```bash
 PYTHONPATH=src uv run python -m lgbm.run_holdout co2 --hours 0 48 \
-    --start 2025-07-01 --end 2026-01-01 --splits 1 --save models --console
+    --start 2025-07-01 --end 2026-01-01 --splits 1 --save fitted --console
 ```
+
+## Trained models
+
+`models/` holds the models of the last test fold: trained on issues up to 2026-08-20, they forecast 2026-08-28 – 2026-10-26 with the numbers in the report.
+
+| Files | Forecast |
+|---|---|
+| `co2_lstm_h0-48_seed{0,1,2}.pt` | CO₂, days 1–2, LSTM, mean over the seeds |
+| `co2_lstm_h48-168_seed{0,1,2}.pt` | CO₂, days 3–7, LSTM, mean over the seeds |
+| `co2_lgbm_h0-48.txt` | CO₂, days 1–2, LightGBM |
+| `co2_far_lgbm_h48-168.txt` | CO₂, days 3–7, LightGBM |
+| `solar_lgbm.txt`, `onshore_lgbm.txt`, `offshore_lgbm.txt` | production inputs of the CO₂ models |
+
+Run with `PYTHONPATH=src`, the LSTM and LightGBM in separate processes: on macOS torch and LightGBM in one process crash. For the last issue in the tables, days 1–2:
+
+```python
+from pathlib import Path
+from data.features.sequences import Sequences
+from neural.predict import load, predict
+
+data = Sequences.load("data/derived/co2_sequences.npz")
+lstm = load(sorted(Path("models").glob("co2_lstm_h0-48_seed*.pt")))
+co2_lstm = predict(lstm, data.past[-1:], data.future[-1:], data.base[-1:, :48])
+```
+
+```python
+import lightgbm as lgb
+from tasks.co2 import CO2
+
+rows = CO2.load().query("h < 48").tail(48)
+booster = lgb.Booster(model_file="models/co2_lgbm_h0-48.txt")
+co2_lgbm = rows["co2_last"] + booster.predict(CO2.X(rows))
+```
+
+Days 3–7 work the same way with `co2_far_sequences.npz`, `base[:, 48:168]` and `CO2_FAR`, whose base is `co2_prof`. Both results are in g CO₂/kWh.
 
 ## Protocols and contracts
 
