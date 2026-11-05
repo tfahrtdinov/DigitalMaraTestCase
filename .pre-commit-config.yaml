@@ -1,0 +1,19 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff
+        name: Ruff lint and import sorting
+        entry: uv run --locked ruff check --fix
+        language: system
+        types_or: [python, pyi]
+      - id: black
+        name: Black formatter
+        entry: uv run --locked black
+        language: system
+        types_or: [python, pyi]
+      - id: pyright
+        name: Pyright type check
+        entry: uv run --locked pyright
+        language: system
+        types_or: [python, pyi]
+        pass_filenames: false
