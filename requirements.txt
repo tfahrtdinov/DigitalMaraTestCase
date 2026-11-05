@@ -2,23 +2,56 @@
 #    uv export --no-hashes --no-emit-project --no-dev -o requirements.txt
 adagio==0.2.6
     # via fugue
+aiohappyeyeballs==2.7.1
+    # via aiohttp
+aiohttp==3.14.5
+    # via mlflow
+aiosignal==1.4.0
+    # via aiohttp
+alembic==1.20.1
+    # via mlflow
+annotated-doc==0.0.5
+    # via fastapi
+annotated-types==0.8.0
+    # via pydantic
+anyio==4.16.0
+    # via
+    #   mlflow-skinny
+    #   starlette
 appnope==1.0.0 ; sys_platform == 'darwin'
     # via ipykernel
 asttokens==3.0.2
     # via stack-data
 attrs==26.1.0
     # via
+    #   aiohttp
     #   jsonschema
     #   referencing
+blinker==1.9.0
+    # via flask
+cachetools==7.2.8
+    # via
+    #   mlflow-skinny
+    #   mlflow-tracing
 certifi==2026.10.23
-    # via requests
-cffi==2.1.1 ; implementation_name == 'pypy'
-    # via pyzmq
+    # via
+    #   databricks-sdk
+    #   requests
+cffi==2.1.1 ; implementation_name == 'pypy' or platform_python_implementation != 'PyPy'
+    # via
+    #   cryptography
+    #   pyzmq
 charset-normalizer==3.5.2
     # via requests
+click==8.5.0
+    # via
+    #   flask
+    #   mlflow-skinny
+    #   uvicorn
 cloudpickle==3.1.2
     # via
     #   joblib
+    #   mlflow-skinny
     #   statsforecast
 colorama==0.4.6 ; sys_platform == 'win32'
     # via
@@ -30,6 +63,10 @@ contourpy==1.4.0
     # via matplotlib
 coreforecast==0.0.20
     # via statsforecast
+cryptography==50.0.2
+    # via
+    #   google-auth
+    #   mlflow
 cuda-bindings==13.4.4 ; python_full_version < '3.15' and sys_platform == 'linux'
     # via torch
 cuda-pathfinder==1.8.5 ; python_full_version < '3.15' and sys_platform == 'linux'
@@ -38,34 +75,77 @@ cuda-toolkit==13.2.2 ; sys_platform == 'linux'
     # via torch
 cycler==0.12.1
     # via matplotlib
+databricks-sdk==0.162.0
+    # via
+    #   mlflow-skinny
+    #   mlflow-tracing
 debugpy==1.8.22
     # via ipykernel
+docker==7.2.0
+    # via mlflow
 donfig==0.8.1.post1
     # via zarr
 executing==2.3.0
     # via stack-data
+fastapi==0.162.0
+    # via mlflow-skinny
 fastjsonschema==2.22.3
     # via nbformat
 filelock==4.2.7
     # via torch
+flask==3.1.3
+    # via
+    #   flask-cors
+    #   mlflow
+flask-cors==6.0.5
+    # via mlflow
 fonttools==4.68.0
     # via matplotlib
 formulaic==1.2.2
     # via statsmodels
+frozenlist==1.8.0
+    # via
+    #   aiohttp
+    #   aiosignal
 fsspec==2026.9.0
     # via
     #   torch
     #   triad
 fugue==0.9.4
     # via statsforecast
+gitdb==4.0.12
+    # via gitpython
+gitpython==3.2.1
+    # via mlflow-skinny
+google-auth==2.62.1
+    # via databricks-sdk
 google-crc32c==1.9.0
     # via zarr
+graphene==3.4.3
+    # via mlflow
+graphql-core==3.2.13
+    # via
+    #   graphene
+    #   graphql-relay
+graphql-relay==3.2.0
+    # via graphene
+gunicorn==26.2.0 ; sys_platform != 'win32'
+    # via mlflow
+h11==0.16.0
+    # via uvicorn
 holidays==0.108
     # via co2-forecast
+huey==3.5.4
+    # via mlflow
 icechunk==2.3.1
     # via co2-forecast
 idna==3.20
-    # via requests
+    # via
+    #   anyio
+    #   requests
+    #   yarl
+importlib-metadata==10.1.0
+    # via mlflow-skinny
 interface-meta==2.0.1
     # via formulaic
 ipykernel==7.4.0
@@ -74,10 +154,14 @@ ipython==9.18.1
     # via ipykernel
 ipython-pygments-lexers==1.1.1
     # via ipython
+itsdangerous==2.2.0
+    # via flask
 jedi==0.20.1
     # via ipython
 jinja2==3.1.6
-    # via torch
+    # via
+    #   flask
+    #   torch
 joblib==1.6.0
     # via scikit-learn
 jsonschema==4.26.0
@@ -100,18 +184,36 @@ lightgbm==4.7.0
     # via co2-forecast
 llvmlite==0.50.0
     # via numba
+mako==1.4.3
+    # via alembic
 markupsafe==3.0.4
-    # via jinja2
+    # via
+    #   flask
+    #   jinja2
+    #   mako
+    #   werkzeug
 matplotlib==3.11.2
-    # via co2-forecast
+    # via
+    #   co2-forecast
+    #   mlflow
 matplotlib-inline==0.2.2
     # via
     #   ipykernel
     #   ipython
+mlflow==3.18.0
+    # via co2-forecast
+mlflow-skinny==3.18.0
+    # via mlflow
+mlflow-tracing==3.18.0
+    # via mlflow
 mpmath==1.3.0
     # via sympy
 msgspec==0.22.0
     # via zarr
+multidict==7.2.1
+    # via
+    #   aiohttp
+    #   yarl
 narwhals==2.28.0
     # via
     #   formulaic
@@ -140,12 +242,14 @@ numpy==2.5.4
     #   formulaic
     #   lightgbm
     #   matplotlib
+    #   mlflow
     #   numba
     #   numcodecs
     #   pandas
     #   patsy
     #   scikit-learn
     #   scipy
+    #   skops
     #   statsforecast
     #   statsmodels
     #   triad
@@ -193,11 +297,31 @@ nvidia-nvshmem-cu13==3.7.2 ; sys_platform == 'linux'
     # via torch
 nvidia-nvtx==13.2.86 ; (platform_machine == 'aarch64' and sys_platform == 'linux') or (platform_machine == 'x86_64' and sys_platform == 'linux')
     # via cuda-toolkit
+opentelemetry-api==1.45.2
+    # via
+    #   fastapi
+    #   mlflow-skinny
+    #   mlflow-tracing
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+opentelemetry-proto==1.45.2
+    # via
+    #   mlflow-skinny
+    #   mlflow-tracing
+opentelemetry-sdk==1.45.2
+    # via
+    #   mlflow-skinny
+    #   mlflow-tracing
+opentelemetry-semantic-conventions==0.66b2
+    # via opentelemetry-sdk
 packaging==26.3
     # via
     #   ipykernel
     #   matplotlib
+    #   mlflow-skinny
+    #   mlflow-tracing
     #   patsy
+    #   skops
     #   statsmodels
     #   triad
     #   utilsforecast
@@ -207,6 +331,7 @@ pandas==3.1.0
     # via
     #   co2-forecast
     #   formulaic
+    #   mlflow
     #   statsforecast
     #   statsmodels
     #   triad
@@ -222,8 +347,20 @@ pillow==13.0.0
     # via matplotlib
 platformdirs==4.14.3
     # via jupyter-core
+prettytable==3.18.0
+    # via skops
 prompt-toolkit==3.0.53
     # via ipython
+propcache==0.5.4
+    # via
+    #   aiohttp
+    #   yarl
+protobuf==7.36.2
+    # via
+    #   databricks-sdk
+    #   mlflow-skinny
+    #   mlflow-tracing
+    #   opentelemetry-proto
 psutil==7.2.2 ; sys_platform != 'android' and sys_platform != 'cygwin' and sys_platform != 'emscripten'
     # via ipython
 ptyprocess==0.7.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
@@ -231,9 +368,22 @@ ptyprocess==0.7.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
 pure-eval==0.2.4
     # via stack-data
 pyarrow==26.0.1
-    # via triad
-pycparser==3.12 ; implementation_name == 'pypy'
+    # via
+    #   mlflow
+    #   triad
+pyasn1==0.6.5
+    # via pyasn1-modules
+pyasn1-modules==0.4.2
+    # via google-auth
+pycparser==3.12 ; (implementation_name != 'PyPy' and platform_python_implementation != 'PyPy') or (implementation_name == 'pypy' and platform_python_implementation == 'PyPy')
     # via cffi
+pydantic==2.14.3
+    # via
+    #   fastapi
+    #   mlflow-skinny
+    #   mlflow-tracing
+pydantic-core==2.50.4
+    # via pydantic
 pygments==2.21.0
     # via
     #   ipython
@@ -322,13 +472,22 @@ pystac-ext-xarray-assets==1.0.1
     # via pystac
 python-dateutil==2.9.0.post0
     # via
+    #   graphene
     #   holidays
     #   jupyter-client
     #   matplotlib
     #   pandas
     #   pystac-core
+python-dotenv==1.2.4
+    # via mlflow-skinny
+python-multipart==0.0.33
+    # via mlflow-skinny
+pywin32==312 ; sys_platform == 'win32'
+    # via docker
 pyyaml==6.0.3
-    # via donfig
+    # via
+    #   donfig
+    #   mlflow-skinny
 pyzmq==27.2.0
     # via
     #   ipykernel
@@ -338,19 +497,28 @@ referencing==0.37.0
     #   jsonschema
     #   jsonschema-specifications
 requests==2.34.2
-    # via co2-forecast
+    # via
+    #   co2-forecast
+    #   databricks-sdk
+    #   docker
+    #   mlflow-skinny
 rpds-py==2026.9.1
     # via
     #   jsonschema
     #   referencing
 scikit-learn==1.9.1
-    # via co2-forecast
+    # via
+    #   co2-forecast
+    #   mlflow
+    #   skops
 scipy==1.18.1
     # via
     #   co2-forecast
     #   formulaic
     #   lightgbm
+    #   mlflow
     #   scikit-learn
+    #   skops
     #   statsforecast
     #   statsmodels
 setuptools==84.2.1
@@ -359,8 +527,22 @@ six==1.17.0
     # via
     #   python-dateutil
     #   triad
+skops==0.16.0
+    # via mlflow
+smmap==5.0.3
+    # via gitdb
+sqlalchemy==2.1.8
+    # via
+    #   alembic
+    #   mlflow
+sqlparse==0.6.1
+    # via mlflow-skinny
 stack-data==0.6.3
     # via ipython
+starlette==1.10.0
+    # via
+    #   fastapi
+    #   mlflow-skinny
 statsforecast==2.0.1
     # via co2-forecast
 statsmodels==0.15.0
@@ -398,25 +580,61 @@ triton==3.9.0 ; python_full_version < '3.16' and sys_platform == 'linux'
     # via torch
 typing-extensions==4.16.0
     # via
+    #   aiohttp
+    #   aiosignal
+    #   alembic
+    #   anyio
+    #   fastapi
     #   formulaic
+    #   graphene
     #   jupyter-client
+    #   mlflow-skinny
     #   numcodecs
+    #   opentelemetry-api
+    #   opentelemetry-sdk
+    #   opentelemetry-semantic-conventions
+    #   pydantic
+    #   pydantic-core
     #   referencing
+    #   sqlalchemy
+    #   starlette
     #   torch
+    #   typing-inspection
     #   zarr
+typing-inspection==0.4.5
+    # via
+    #   fastapi
+    #   pydantic
 tzdata==2026.6 ; sys_platform == 'emscripten' or sys_platform == 'win32'
     # via pandas
 urllib3==2.8.0
-    # via requests
+    # via
+    #   databricks-sdk
+    #   docker
+    #   requests
 utilsforecast==0.2.17
     # via statsforecast
+uvicorn==0.54.0
+    # via mlflow-skinny
+waitress==3.0.2 ; sys_platform == 'win32'
+    # via mlflow
 wcwidth==0.9.4
-    # via prompt-toolkit
+    # via
+    #   prettytable
+    #   prompt-toolkit
+werkzeug==3.1.9
+    # via
+    #   flask
+    #   flask-cors
 wrapt==2.5.2
     # via formulaic
 xarray==2026.9.0
     # via co2-forecast
+yarl==1.25.1
+    # via aiohttp
 zarr==3.4.2
     # via
     #   co2-forecast
     #   icechunk
+zipp==4.1.2
+    # via importlib-metadata
