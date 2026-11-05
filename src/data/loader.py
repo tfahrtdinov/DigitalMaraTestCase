@@ -5,7 +5,7 @@ the hour. Provenance and caveats: data/README.md.
     entsoe(name)        ENTSO-E hourly series: data/raw/entsoe_<name>_*.csv, e.g. entsoe("actual_wind_offshore")
     openmeteo(group)    ECMWF forecasts with known lead (Open-Meteo Previous Runs), long table: time, point, lead, value
     gefs_stores(box)    paths of the monthly NOAA GEFS ensemble stores; gefs(store) opens one lazily
-    outages()           ENTSO-E unavailability announcements (A80, production units)
+    outages(document)   ENTSO-E unavailability announcements (A80 production units, A77 mostly wind parks)
 """
 
 from pathlib import Path
@@ -90,11 +90,11 @@ def gefs(store: Path) -> xr.Dataset:
     return xr.open_zarr(store, consolidated=False, chunks=None)
 
 
-def outages() -> pd.DataFrame:
-    """ENTSO-E A80 production unavailability: one row per announcement, revisions included (`mrid`, `revision`).
+def outages(document: str = "A80") -> pd.DataFrame:
+    """ENTSO-E unavailability: A80 production units, A77 mostly wind parks. One row per announcement, revisions included (`mrid`, `revision`).
     Columns: unit_name, fuel, nominal_mw, available_mw, outage_start_utc, outage_end_utc, created_utc, doc_status
     (A05 active, A09 cancelled, A13 withdrawn)."""
-    df = _concat_csv(f"entsoe_outages_A80_{DATES}.csv")
+    df = _concat_csv(f"entsoe_outages_{document}_{DATES}.csv")
     for c in [
         "created_utc",
         "outage_start_utc",

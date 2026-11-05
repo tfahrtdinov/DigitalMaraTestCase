@@ -12,7 +12,22 @@ from numpy.typing import NDArray
 from data.loader import DERIVED, gefs, gefs_stores
 
 CACHE = DERIVED / "gefs_3h"
+# de_* and be_* lie outside the Dutch box: approximate centres of wind regions,
+# read from the wider store (box="wind")
 POINTS: dict[str, dict[str, tuple[float, float]]] = {
+    "de_offshore": {
+        "borkum": (54.00, 6.50),
+        "helgoland": (54.40, 7.60),
+        "sylt": (55.00, 7.20),
+    },
+    "de_onshore": {
+        "emsland": (52.70, 7.40),
+        "lower_saxony": (53.20, 8.50),
+        "schleswig_holstein": (54.50, 9.00),
+        "mecklenburg": (53.80, 11.50),
+    },
+    "be_offshore": {"belgian_zone": (51.60, 2.90)},
+    "be_onshore": {"flanders": (51.10, 3.80), "hainaut": (50.80, 4.20)},
     "offshore": {
         "borssele": (51.70, 3.00),
         "hk_zuid": (52.30, 4.05),
@@ -120,3 +135,47 @@ def to_hours(table: pd.DataFrame, column: str, n_hours: int) -> NDArray[np.float
         wide.reindex(wide.index.union(mid)).interpolate(method="index").reindex(mid)
     )
     return hourly.T.to_numpy().ravel()
+
+
+def gefs_neighbor_wind(groups: list[str], n_hours: int = 168) -> pd.DataFrame:
+    """Wind speed mean and spread over the members for point groups outside the Dutch box,
+    per (issue at 06 UTC of the run's day, hour), interpolated to hour centres. The 3 h table
+    is cached in data/derived/gefs_neighbors_3h.parquet."""
+    cached = DERIVED / "gefs_neighbors_3h.parquet"
+    if not cached.exists():
+        parts = []
+        for store in gefs_stores("wind"):
+            ds = gefs(store)
+            leads = (ds.lead_time.values / np.timedelta64(1, "h")).astype(int)
+            inits = pd.DatetimeIndex(ds.init_time.values).tz_localize("UTC")
+            speed = {g: _wind_speed(ds, g) for g in groups}
+            parts.append(
+                pd.DataFrame(
+                    {
+                        "issue_time": (inits + pd.Timedelta(hours=6)).repeat(
+                            len(leads)
+                        ),
+                        "t_rel": np.tile(leads - 6, len(inits)),
+                        **{
+                            f"{g}_ws_mean": np.nanmean(a, axis=1).ravel()
+                            for g, a in speed.items()
+                        },
+                        **{
+                            f"{g}_ws_std": np.nanstd(a, axis=1).ravel()
+                            for g, a in speed.items()
+                        },
+                    }
+                )
+            )
+        pd.concat(parts, ignore_index=True).to_parquet(cached, index=False)
+    table = pd.read_parquet(cached)
+    issues = np.sort(table.issue_time.unique())
+    out = pd.DataFrame(
+        {
+            "issue_time": np.repeat(issues, n_hours),
+            "h": np.tile(np.arange(n_hours), len(issues)),
+        }
+    )
+    for c in table.columns.drop(["issue_time", "t_rel"]):
+        out[c] = to_hours(table, c, n_hours)
+    return out
