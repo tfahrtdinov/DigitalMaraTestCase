@@ -1,8 +1,18 @@
-# MLflow tracking server plus a training image built from uv.lock.
+# MLflow tracking server plus two training images built from uv.lock (Dockerfile).
 #   docker compose up -d                                   -> MLflow UI at http://localhost:5001
-#   docker compose run --rm train lgbm.run_hpo solar       -> HPO inside the container,
-#   docker compose run --rm train lgbm.run_holdout solar      metrics to the same MLflow
-# Local runs (uv run ...) log to MLFLOW_TRACKING_URI from .env; see .env.example.
+#   docker compose run --rm train lgbm.run_hpo solar       -> LightGBM inside the container,
+#   docker compose run --rm train-neural neural.run ...    -> LSTM/MLP, torch CPU build;
+#                                                             both log to the same MLflow
+
+x-train: &train
+  profiles: [train]
+  depends_on: [mlflow]
+  environment:
+    MLFLOW_TRACKING_URI: http://mlflow:5000
+  volumes:
+    - ./data:/app/data
+    - ./configs:/app/configs
+
 services:
   mlflow:
     image: ghcr.io/mlflow/mlflow:v3.18.0
@@ -20,14 +30,16 @@ services:
     restart: unless-stopped
 
   train:
-    build: .
-    profiles: [train]
-    depends_on: [mlflow]
-    environment:
-      MLFLOW_TRACKING_URI: http://mlflow:5000
-    volumes:
-      - ./data:/app/data
-      - ./configs:/app/configs
+    <<: *train
+    build:
+      context: .
+      target: lgbm
+
+  train-neural:
+    <<: *train
+    build:
+      context: .
+      target: neural
 
 volumes:
   mlflow-data:

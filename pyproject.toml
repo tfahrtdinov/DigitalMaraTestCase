@@ -29,6 +29,16 @@ dependencies = [
 # neural baselines (src/trainer.py, src/models/neural): uv sync --extra neural
 neural = ["torch>=2.15.0"]
 
+# Linux gets the CPU build of torch: the PyPI wheels there pull the CUDA stack (several GB).
+# macOS keeps the PyPI wheel, which is CPU/MPS already.
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "sys_platform == 'linux'" }]
+
 [dependency-groups]
 dev = [
     "black>=26.10.1",
