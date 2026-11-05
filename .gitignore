@@ -4,3 +4,9 @@ __pycache__/
 .venv/
 CLAUDE.md
 *.pdf
+# previous iteration, kept as reference only
+outdated/
+# local environments of foundation-model experiments (3 GB)
+envs/
+# working draft; remove this line when the report is final
+final_report.md
