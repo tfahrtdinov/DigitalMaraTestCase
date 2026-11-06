@@ -12,6 +12,7 @@ x-train: &train
   volumes:
     - ./data:/app/data
     - ./configs:/app/configs
+    - ./fitted:/app/fitted
 
 services:
   mlflow:
