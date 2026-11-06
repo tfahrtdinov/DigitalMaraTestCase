@@ -12,7 +12,7 @@ The feature tables and model configs are committed, so the models run without ra
 
 ```bash
 uv sync --extra neural   # dependencies with torch (uv sync: without torch)
-make mlflow              # MLflow in Docker at http://localhost:5001; without it, runs go to mlruns/
+make mlflow              # MLflow in Docker at http://localhost:5001; without it, runs go to mlflow.db
 make train               # all models on the validation periods, DEVICE=cuda for a GPU
 make train-test          # CO₂ models on the 2026 test folds
 make train-final         # models of the last test fold, overwrites fitted/

@@ -3,7 +3,7 @@ name = "co2-forecast"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "lightgbm>=4.7.0",
+    "lightgbm[scikit-learn]>=4.7.0",
     "mlflow-skinny>=3.18.0",
     "numpy>=2.5.4",
     "optuna>=5.0.0",

@@ -42,6 +42,7 @@ def main() -> None:
     logger = ConsoleLogger(name) if a.console else MLflowLogger("holdout", name)
     with logger:
         evaluate(table, logger)
+    (DERIVED / "forecasts").mkdir(parents=True, exist_ok=True)
     table.to_parquet(DERIVED / "forecasts" / f"{name}.parquet", index=False)
 
 
